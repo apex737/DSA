@@ -1,4 +1,4 @@
-#include "StaticArray.h"
+#include "Static/StaticArray.h"
 
 int main()
 {
