@@ -16,6 +16,7 @@ Node* createNode(int id, const char* name, const char* phone)
 {
     Node* pNewNode = (Node*)malloc(sizeof(Node));
     pNewNode->id = id;
+    // strcpy_s 대용
     int retName = snprintf(pNewNode->name, sizeof(pNewNode->name), "%s", name);
     int retPhone = snprintf(pNewNode->phone, sizeof(pNewNode->phone), "%s", phone);
     pNewNode->pNext = NULL;
