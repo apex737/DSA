@@ -15,7 +15,7 @@ typedef struct Node { // Tag
 
 Node* createNode(int id, const char* name, const char* phone);
 void insertHead(int id, const char* name, const char* phone);
-int popHead();
+int popHead(void);
 void insertTail(int id, const char* name, const char* phone);
 int popTail(void);
 void traverse(void);

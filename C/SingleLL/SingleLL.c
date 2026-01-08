@@ -44,7 +44,7 @@ void insertHead(int id, const char* name, const char* phone)
     dummyHead.pNext = pNewNode;    
 }
 
-int popHead()
+int popHead(void)
 {
     Node* pDelete = dummyHead.pNext;
     if(pDelete == NULL){
