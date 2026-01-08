@@ -6,8 +6,19 @@
 #include <stdio.h>
 #define LEN         20
 
+typedef struct Node { // Tag 
+    int id;
+    char name[LEN];
+    char phone[LEN];
+    struct Node* pNext;
+} Node;              // Alias 
 
 Node* createNode(int id, const char* name, const char* phone);
-void releaseNode(Node* pNode);
+void insertHead(int id, const char* name, const char* phone);
+int popHead();
+void insertTail(int id, const char* name, const char* phone);
+int popTail(void);
+void traverse(void);
+void release(void);
 
 #endif
