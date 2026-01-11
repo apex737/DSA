@@ -34,7 +34,8 @@ class Stack:
     
     def peek(self):
         if self.top is None:
-            raise Exception("Stack is empty")
+            print("Stack is Emtpy")
+            return
         return self.top.data
         
     def printAll(self):
