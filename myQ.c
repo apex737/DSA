@@ -7,7 +7,8 @@ int PowerQ[POWER_OF_TWO_LEN];
     2. Full이면 더이상 쓰지 않고, Empty이면 더이상 읽지 않는다.
     3. 다음 쓸 위치가 읽을 위치이면 Full
     4. rpos만이 wpos == rpos를 만들수 있도록 함 
-    5. MAX_LEN - 1 이 REAL_LEN에 해당함 (Slot 1개 희생)
+    *5. MAX_LEN - 1 이 REAL_LEN에 해당함 (Slot 1개 희생)
+    : Enqueue는 값을 쓸 뿐만 아니라, wpos++을 하기 때문이다.
 */
 bool SORQ_isFull()
 {
