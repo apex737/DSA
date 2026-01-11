@@ -19,10 +19,11 @@ class CircularDLL:
     
     def insert_head(self, data):
         new_node = Node(data)
+        # 특징: 
+        # 1. 첫 노드는 Head/Prev/Next Node
+        # 2. 노드가 하나라도 있으면 None 금지(Cicular)
         if self.head == None:
             self.pos = self.head = new_node
-            # Circular Linked List이기 때문에
-            # 노드가 하나라도 있으면 None이 금지됨
             self.head.next = self.head.prev = self.head
         else:
             old_head = self.head
