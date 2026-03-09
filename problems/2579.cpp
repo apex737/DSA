@@ -17,10 +17,10 @@ int main()
   D[1] = arr[1]; 
   D[2] = arr[1]+arr[2];
   D[3] = max(arr[1], arr[2])+arr[3];
-  // D[4] = max(arr[1]+arr[3], D[2])+arr[4];
-  // D[5] = max(arr[2]+arr[4], D[3])+arr[4];
+  // D[4] = max(D[1]+arr[3], D[2])+arr[4];
+  // D[5] = max(D[2]+arr[4], D[3])+arr[4];
   for(int i = 4; i <= n; i++){
-    D[i] = max(arr[i-3]+arr[i-1], D[i-2])+arr[i];
+    D[i] = max(D[i-3]+arr[i-1], D[i-2])+arr[i];
   }
 
   cout << D[n];
