@@ -4,15 +4,6 @@ using namespace std;
 int n;
 // 1-n 오름차순 스택 push
 // 스택에서 값을 꺼내서 수열을 구성하는게 pop
-/* 8
-
-1. 4까지 push -> max 갱신하면서
-2. pop2
-3. 6,8까지 push -> target-max=2만큼 push
-4. pop2
-5. 다음수가 나보다 작은데 내 포지션에 그 수가 없으면 NO 출력 
-
-*/
 int arr[100001];
 vector<char> res;
 int main()
