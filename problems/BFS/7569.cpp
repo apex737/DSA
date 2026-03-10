@@ -15,6 +15,7 @@ int dz[]={0,0,0,0,1,-1};
 int maxD;
 int main()
 {
+  cin.tie(0)->sync_with_stdio(0);
   cin >> M >> N >> H;
   queue<Node> q;
   for(int k = 0; k < H; k++)
