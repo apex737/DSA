@@ -13,7 +13,6 @@ int main()
   for(int i = 0; i < n; i++) cin >> arr[i];
   stack<int> s;
   int curMax=0;
-  int temp=0;
   for(int i = 0; i < n; i++)
   {
     // 4 3 6 8 7 5 2 1 
