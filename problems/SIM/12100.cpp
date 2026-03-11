@@ -1,17 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-/* 노드의 이동방식과 보드의 위치가 정의되어있다..
-- 전형적인 BFS 아닌가? 
-- 그러면 진짜로 큐 패턴을 써야할까? 
-: Yes. 그래야 모든 노드를 공평하게 이동시킬수 있으니까
-- 하지만 이동에는 순서가 존재하기 때문에 그걸 컨트롤하는게 핵심인듯? */
-// 방향에 맞게 루프를 돌며 한 줄씩 처리
-
-// mov 상하좌우: 엣지로 전부이동
-// 가능하면 merge -> 벽에다 짜부
-
-// 
 int n;
 int maxVal;
 struct Board {
@@ -22,6 +11,13 @@ Board b;
 vector<int> compressLine(const vector<int> line);
 void dfs(int cur, Board b);
 Board mov(const Board& b, int dir);
+
+/* 
+  1. 일반적으로, 메모리 사용은 문제를 단순화한다.
+  2. dfs 인자로 그리드(보드) 구조체를 넘기는 패턴이 존재한다.
+  3. 문제가 복잡하면 (여러 함수로) 쪼개라.
+  4. 쇼트서킷 룰로 세그폴트 리스크를 헤지할 수 있다. 
+*/
 
 int main()
 {
@@ -42,44 +38,35 @@ vector<int> compressLine(const vector<int> line)
 {
   // 1. 벡터에 전부 넣기
   vector<int> v;
-  int size = (int)line.size();
+  vector<int> ret; // 메모리를 더 쓸 수록 문제가 간단해질 확률이 높아진다. 
   for(int x : line)
     if(x!=0) v.push_back(x);
+
   // 2. 합칠수있으면 합치기
-  // 4 4 2; 인접한게 같으면 합침
   for(int i = 0; i < v.size(); i++)
   {
-    if(i+1<v.size() && v[i]==v[i+1]) // 쇼트서킷룰
-    {
-      v[i]+=v[i+1];
-      v[i+1]=0;
+    if(i+1<v.size() && v[i]==v[i+1]) { // tip: 쇼트서킷룰
+      ret.push_back(v[i]*2);
+      i++;
     }
+    else ret.push_back(v[i]);
   }
-  // 3. 마저 밀어주고 남은자리 0 패딩
-  int padding = size-v.size();
-  for(int i = 0; i < v.size(); i++)
-  {
-    if(v[i]==0 && i+1 < v.size()){
-      v[i] = v[i+1];
-      v[i+1]=0;
-    }
-  }
-  while(padding--)
-    v.push_back(0);
-  return v;
+  
+  // 3. 남은자리 0 패딩; 메모리를 더 썼더니 문제가 사라졌다.
+  while(ret.size() < n) ret.push_back(0); // 피드백 루프
+
+  return ret;
 }
 
 Board mov(const Board& b, int dir)
 {
   Board ret;
-  // cbc, rbr을 구별해야할까? 결과는 행렬인데..
   switch (dir)
   {
     case 0: {
-      // 먼저 b의 한 라인을 넘겨서 옮긴다.
-      vector<int> line;
-      for(int c=0;c<n;c++)  // col by col로 움직이면서 벡터삽입
+      for(int c=0;c<n;c++)  // Col by Col로 움직이면서 벡터삽입
       {
+        vector<int> line;
         for(int r=0;r<n;r++)
           line.push_back(b.a[r][c]);       
         line = compressLine(line);
@@ -89,38 +76,38 @@ Board mov(const Board& b, int dir)
       break;
     }
     case 1: {
-      vector<int> line;
       for(int c=0;c<n;c++)  // CbC로 움직이면서 벡터삽입
       {
+        vector<int> line;
         for(int r=n-1;r>=0;r--)
           line.push_back(b.a[r][c]);       
         line = compressLine(line);
-        for(int r=n-1;r>=0;r--)
-          ret.a[r][c]= line[r];
+        for(int r=n-1, i=0;r>=0;r--,i++)
+          ret.a[r][c]= line[i]; // 역순 삽입
       }
       break;
     }
     case 2: {
-      vector<int> line;
       for(int r=0;r<n;r++)  // RbR로 움직이면서 벡터삽입
       {
+        vector<int> line;
         for(int c=0;c<n;c++)
           line.push_back(b.a[r][c]);       
         line = compressLine(line);
         for(int c=0;c<n;c++)
-          ret.a[r][c]= line[r];
+          ret.a[r][c]= line[c];
       }
       break;
     }
     case 3: {
-      vector<int> line;
       for(int r=0;r<n;r++)  // RbR로 움직이면서 벡터삽입
       {
+        vector<int> line;
         for(int c=n-1;c>=0;c--)
           line.push_back(b.a[r][c]);       
         line = compressLine(line);
-        for(int c=n-1;c>=0;c--)
-          ret.a[r][c]= line[r];
+        for(int c=n-1,i=0;c>=0;c--,i++)
+          ret.a[r][c]= line[i]; // 역순 삽입
       }
       break;
     }
