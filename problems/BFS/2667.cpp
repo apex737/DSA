@@ -1,9 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-/*전략: 
-Full Search 하면서 카운터 증가시키고
-노드의 번호로 대입하면 될듯?? */
 int dr[]={1,0,-1,0};
 int dc[]={0,1,0,-1};
 int n;
@@ -18,13 +15,18 @@ int main()
 {
   cin.tie(0)->sync_with_stdio(0);
   cin >> n;
-  for(int i=0;i<n;i++)
+  string s; // 입력이 붙어서 오는 경우 표준해법
+  for(int i=0;i<n;i++)  
+  {
+    cin >> s; 
     for(int j=0;j<n;j++)
-      cin >> board[i][j];
-    
-  queue<Node> q;
+      board[i][j] = s[j]-'0';
+  }
+
+  queue<Node> q; 
   vector<int> v;
   for(int i=0;i<n;i++)
+  {
     for(int j=0;j<n;j++)
     {
       if(board[i][j]==1&&seen[i][j]==0)
@@ -33,7 +35,7 @@ int main()
         q.push({i,j});
         seen[i][j]=1;
         no++;
-        while(!q.empty())
+        while(!q.empty())  
         {
           Node cur = q.front(); q.pop();
           for(int i=0;i<4;i++)
@@ -51,6 +53,7 @@ int main()
         v.push_back(cnt);
       }
     }
+  }
   sort(v.begin(), v.end());
   cout << no << "\n";
   for(int num : v) cout << num << "\n";
