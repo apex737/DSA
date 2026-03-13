@@ -2,7 +2,7 @@
 using namespace std;
 
 int mx, start, dst, up, down;
-bool seen[101];
+bool seen[1000001];
 struct Node {
   int x,d;
 };
@@ -21,15 +21,14 @@ int main()
     }
     int nx1 = cur.x+up;
     int nx2 = cur.x-down;
-    // seen을 안쓰면 케이스가 너무 많이 생기고
-    // 쓰게되면 이전 케이스가 seen을 선점해서 경로를 막는 문제가 생긴다.
-    if(nx1<mx && seen[nx1]==0){
+    if(1<= nx1 && nx1<=mx && seen[nx1]==0){
       q.push({nx1,cur.d+1});
-      seen[cur.x]=1;
+      seen[nx1]=1;
     } 
-    if(nx2>=0 && seen[nx2]==0) 
+    if(1<= nx2 && nx2<=mx && seen[nx2]==0) {
       q.push({nx2,cur.d+1});
-      seen[cur.x]=1;
+      seen[nx2]=1;
+    }
   }
   cout << "use the stairs" << "\n";
   return 0;
