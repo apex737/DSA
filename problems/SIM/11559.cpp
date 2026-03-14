@@ -1,94 +1,95 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-/*  전략
-  1. 인접한 개수 세고 터뜨리는 bfs 로직
-  2. 벡터를 사용하여 CbC 이동 및 보드 상태를 CbC 업데이트 */
-
 struct Node {
-  int r,c;
-  char tag;
+    int r, c;
 };
 
 struct Board {
-  char a[12][6];
-}; 
-int dr[]={1,0,-1,0};
-int dc[]={0,1,0,-1};
+    char a[12][6];
+};
 
-bool bfs(Board& b, int& popCnt)
+int dr[] = {1, 0, -1, 0};
+int dc[] = {0, 1, 0, -1};
+
+bool bfs(Board& b) 
 {
-  queue<Node> q;
-  bool seen[12][6]={0};
-  Board backup = b;
-  for(int i=0; i<12;i++)
-    for(int j=0; j<6;j++)
+  bool seen[12][6] = {};
+  bool popped = false;
+
+  for (int i = 0; i < 12; i++) 
+  {
+    for (int j = 0; j < 6; j++) 
     {
-      if(b.a[i][j]=='R'||b.a[i][j]=='G'||
-          b.a[i][j]=='B'||b.a[i][j]=='P'||b.a[i][j]=='Y'&&seen[i][j]==0)
+      if (b.a[i][j] == '.' || seen[i][j]) continue;
+
+      char color = b.a[i][j];
+      queue<Node> q;
+      vector<Node> comp;
+
+      q.push({i, j});
+      seen[i][j] = 1;
+      // 백업을 할 바에 벡터를 하나 더 쓰는게 낫다
+      comp.push_back({i, j});
+
+      while (!q.empty()) 
       {
-        seen[i][j]=1;
-        q.push({i,j, b.a[i][j]});
-        /*----------- initial condition -----------*/ 
-        int localCnt = 1; 
-        b.a[i][j]='X';
-        /*----------- initial condition -----------*/ 
-        while(!q.empty())
-        { 
-          Node cur = q.front(); q.pop();
-          for(int dir=0; dir<4;dir++)
-          {
-            int nr = cur.r+dr[dir];
-            int nc = cur.c+dc[dir];
-            if(nr<0||nr>=12||nc<0||nc>=6) continue;
-            if(seen[nr][nc] || b.a[nr][nc] != cur.tag) continue;
-            seen[nr][nc]=1;
-            q.push({nr,nc,cur.tag});
-            localCnt++;
-            b.a[nr][nc]='X';
-          }
-        }
-        if(localCnt >= 4) 
+        auto cur = q.front(); q.pop();
+
+        for (int dir = 0; dir < 4; dir++) 
         {
-          popCnt++; 
-          return true;
+          int nr = cur.r + dr[dir];
+          int nc = cur.c + dc[dir];
+
+          if (nr < 0 || nr >= 12 || nc < 0 || nc >= 6) continue;
+          if (seen[nr][nc]) continue;
+          if (b.a[nr][nc] != color) continue;
+
+          seen[nr][nc] = 1;
+          q.push({nr, nc});
+          comp.push_back({nr, nc});
         }
-        b = backup;  
+      }
+
+      if ((int)comp.size() >= 4) 
+      {
+        popped = true;  // 바로 리턴X; 동시에 터지는 것도 1회로 간주
+        for (auto &x : comp) {
+          b.a[x.r][x.c] = '.';  // 터질 위치 비우기 
+        }
       }
     }
-  return false;
-}
-
-void popX(Board& b)
-{
-  vector<char> v[6];
-  for(int c=0;c<6;c++)
-  {
-    for(int r=0;r<12;r++)
-      if(b.a[r][c]!='X') v[c].push_back(b.a[r][c]);
-
-    while(v[c].size()<12)
-      v[c].insert(v[c].begin(), '.');
   }
 
-  for(int r=0;r<12;r++)
-    for(int c=0;c<6;c++)
-      b.a[r][c] = v[c][r];
+  return popped;
 }
 
-int main()
-{
+void popX(Board& b) {
+  for (int c = 0; c < 6; c++)
+  {
+    vector<char> v;
+    for (int r = 11; r >= 0; r--) {
+      if (b.a[r][c] != '.') v.push_back(b.a[r][c]);
+    }
+
+    int idx = 11;
+    for (char x : v) b.a[idx--][c] = x;
+    while (idx >= 0) b.a[idx--][c] = '.';
+  }
+}
+
+int main() {
+  cin.tie(0)->sync_with_stdio(0);
   Board b;
-  for(int i=0; i<12;i++)  
-    for(int j=0; j<6;j++)
+  for (int i = 0; i < 12; i++)
+    for (int j = 0; j < 6; j++)
       cin >> b.a[i][j];
 
-  int popCnt = 0;
-  // 더이상 터뜨릴게 없을 때까지 반복
-  while(bfs(b, popCnt))
-  {
-    popX(b);
+  int chain = 0;
+  while (bfs(b)) {
+      popX(b);
+      chain++;
   }
 
-  cout << popCnt;
+  cout << chain;
 }
