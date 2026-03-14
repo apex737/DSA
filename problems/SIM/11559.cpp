@@ -86,6 +86,7 @@ int main()
       s[j] = b.a[i][j];
   }
 
+  // 왜 여기에서 터질까??
   for(int i=0; i<12;i++)
   {
     for(int j=0; j<6;j++)
