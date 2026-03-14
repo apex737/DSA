@@ -5,10 +5,11 @@ using namespace std;
   1. 보드를 받되, 최댓값을 찾는다
   2. 최댓값까지 for 루프를 돌면서 영역의 수를 찾는다.
   3. 영역의 수는 full-search를 한다
-  4. bfs 표준형에서 fence를 장마 LV 이하의 값들로 한다 */
+  4. bfs 표준형에서 fence를 장마 LV 이하의 값들로 한다 
+*/
 
 int n;
-int maxCnt;  
+int maxCnt=1;     // 엣지케이스: 비가 안올수도 있다 (rainLV=0)
 int board[101][101];
 bool seen[101][101];
 int dr[]={1,0,-1,0};
@@ -30,7 +31,7 @@ int main()
     }
   queue<Node> q;
   // 2. 최댓값까지 for 루프를 돌면서 영역의 수를 찾는다.
-  for(int rainLV=2;rainLV<mx;rainLV++) // 장마의 레벨은 2 ~ mx-1 까지이며, 레벨 이하는 fence로 간주한다
+  for(int rainLV=1;rainLV<mx;rainLV++) // 장마의 레벨은 1 ~ mx-1 까지; 레벨 이하는 fence로 간주한다
   {
     int localCnt = 0; 
     memset(seen, 0, sizeof(seen));
