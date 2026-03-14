@@ -13,15 +13,14 @@ struct Node {
 struct Board {
   char a[12][6];
 }; 
-bool seen[12][6];
 int dr[]={1,0,-1,0};
 int dc[]={0,1,0,-1};
 
-bool bfs(Board b, int& popCnt)
+bool bfs(Board& b, int& popCnt)
 {
   queue<Node> q;
+  bool seen[12][6]={0};
   Board backup = b;
-  memset(seen, 0, sizeof(seen));
   for(int i=0; i<12;i++)
     for(int j=0; j<6;j++)
     {
@@ -30,7 +29,10 @@ bool bfs(Board b, int& popCnt)
       {
         seen[i][j]=1;
         q.push({i,j, b.a[i][j]});
-        int localCnt = 0;
+        /*----------- initial condition -----------*/ 
+        int localCnt = 1; 
+        b.a[i][j]='X';
+        /*----------- initial condition -----------*/ 
         while(!q.empty())
         { 
           Node cur = q.front(); q.pop();
@@ -38,7 +40,7 @@ bool bfs(Board b, int& popCnt)
           {
             int nr = cur.r+dr[dir];
             int nc = cur.c+dc[dir];
-            if(nr<0||nr>=6||nc<0||nc>=12) continue;
+            if(nr<0||nr>=12||nc<0||nc>=6) continue;
             if(seen[nr][nc] || b.a[nr][nc] != cur.tag) continue;
             seen[nr][nc]=1;
             q.push({nr,nc,cur.tag});
@@ -60,49 +62,33 @@ bool bfs(Board b, int& popCnt)
 void popX(Board& b)
 {
   vector<char> v[6];
-  // 1. X를 건너뛰며 삽입
   for(int c=0;c<6;c++)
   {
     for(int r=0;r<12;r++)
-      if(b.a[r][c]!='X') v[c].push_back(b.a[c][r]);
-    // 2. 패딩 채우기
+      if(b.a[r][c]!='X') v[c].push_back(b.a[r][c]);
+
     while(v[c].size()<12)
       v[c].insert(v[c].begin(), '.');
   }
 
-  for(int c=0;c<6;c++)
-    for(int r=0;r<12;r++)
-      b.a[c][r] = v[c][r];
+  for(int r=0;r<12;r++)
+    for(int c=0;c<6;c++)
+      b.a[r][c] = v[c][r];
 }
 
 int main()
 {
   Board b;
-  for(int i=0; i<12;i++)
-  {
-    string s;
-    cin >> s;
+  for(int i=0; i<12;i++)  
     for(int j=0; j<6;j++)
-      s[j] = b.a[i][j];
-  }
+      cin >> b.a[i][j];
 
-  // 왜 여기에서 터질까??
-  for(int i=0; i<12;i++)
-  {
-    for(int j=0; j<6;j++)
-      cout << b.a[i][j] << " ";
-    cout << "\n";
-  }
-  return 0;
-          
   int popCnt = 0;
   // 더이상 터뜨릴게 없을 때까지 반복
   while(bfs(b, popCnt))
   {
-    // popNode & 보드상태 변경
     popX(b);
   }
 
   cout << popCnt;
-
 }
