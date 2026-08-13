@@ -20,13 +20,15 @@ struct Pair
 int getMinRow(int N, int M);
 void rotate(const Pair &st, const Pair &en);
 void printAll();
-vector<Rotates> vr;
+vector<Rotates> vr, sel;
+int mn;
 int main()
 {
     int T;
     cin >> T;
     for (int t = 1; t <= T; t++)
     {
+        mn = 9999;
         cin >> N >> M >> K;
         for (int i = 0; i < N; i++)
             for (int j = 0; j < M; j++)
@@ -39,20 +41,54 @@ int main()
             cin >> r >> c >> s;
             vr.push_back({r, c, s});
         }
+        sel.clear();
+        sel.resize(vr.size());
 
         // 회전연산
+        // 이걸 순열로 풀어야함; 최소를 뽑을 수 있는걸 선택
+        // vr 자체를 그냥 보는게 아니라 순열로 섞어야함
+        dfs(0);
         for (auto p : vr)
         {
             auto [r, c, s] = p;
             Pair topLeft{r - s - 1, c - s - 1};
             Pair botRight{r + s - 1, c + s - 1};
             rotate(topLeft, botRight);
-            // printAll();
         }
-        cout << "#" << t << " " << getMinRow(N, M) << "\n";
+        cout << "#" << t << " " << mn << "\n";
     }
 
     return 0;
+}
+
+// N! 모든 경우를 전부 확인해서 최소값을 찾는다
+void dfs(int curr)
+{
+    // 선택을 다 했으면 해당 조합에 대해서 Rotate
+    if (curr == vr.size())
+    {
+        for (int i = 0; i < vr.size(); i++)
+        {
+            auto p = [sel[i]] auto [r, c, s] = p;
+            Pair topLeft{r - s - 1, c - s - 1};
+            Pair botRight{r + s - 1, c + s - 1};
+            rotate(topLeft, botRight);
+            // printAll();
+        }
+        mn = min(mn, getMinRow(N, M));
+        return;
+    }
+
+    for (int i = 0; i < vr.size(); i++)
+    {
+        if (!seen[i])
+        {
+            seen[i] = 1;
+            sel[curr] = i;
+            dfs(curr + 1);
+            seen[i] = 0;
+        }
+    }
 }
 
 void printAll()
