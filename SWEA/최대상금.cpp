@@ -5,7 +5,7 @@
 #include <string>
 
 using namespace std;
-int N, T, ans;
+int N, T, mx;
 
 string s;
 
@@ -28,7 +28,7 @@ void dfs(int curr)
     // D EPTH: 교환 횟수
     if (curr == N)
     {
-        ans = max(ans, stoi(s));
+        mx = max(mx, stoi(s));
         return;
     }
 
@@ -48,17 +48,15 @@ int main()
 
     for (int t = 1; t <= T; t++)
     {
-        ans = 0;
+        mx = 0;
         s.clear();
         cin >> s >> N;
         /* vector < set > 을 전부 빈 set {} 로 초기화
-           추후 랜덤 액세스할 때 세그폴트 안뜨려면 N+1로 잡아서
-           v[N]까지 액세스 가능하도록 함
-
-        */
+           추후 랜덤 액세스할 때 세그폴트 떠서, N+1로 잡아서
+           v[N]까지 액세스 가능하도록 함 */
         v.assign(N + 1, {});
         dfs(0);
-        cout << "#" << t << " " << ans << "\n";
+        cout << "#" << t << " " << mx << "\n";
     }
     return 0;
 }
