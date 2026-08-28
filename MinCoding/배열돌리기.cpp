@@ -1,177 +1,98 @@
 #include <iostream>
 #include <vector>
-#include <deque>
-#include <algorithm>
 
 using namespace std;
-int N, M, K;
-int board[55][55];
+int N, M, cnt;
 
-struct Rotates
+struct Rotate
 {
     int r, c, s;
 };
 
-struct Pair
+struct Board
 {
-    int r, c;
+    int b[55][55];
 };
 
-int getMinRow(int N, int M);
-void rotate(const Pair &st, const Pair &en);
-void printAll();
-vector<Rotates> vr, sel;
+Board board;
+
+// 연산 주어지면 거기 맞춰서 보드 변경
+// 가장 왼쪽 윗 칸이 (r-s, c-s), 가장 오른쪽 아랫 칸이 (r+s, c+s)인 정사각형을
+// 시계 방향으로 한 칸씩 돌린다
+
+int getMinRow(const Board &board)
+{
+    int row;
+    int mn = 999;
+    for (int i = 0; i < N; i++)
+    {
+        row = 0;
+        for (int j = 0; j < M; j++)
+            row += board.b[i][j];
+        mn = min(mn, row);
+    }
+    return mn;
+}
+
 int mn;
+vector<bool> seen;
+vector<Rotate> vRot;
+
+// 보드를 한칸씩 CW 방향 회전
+void rotate(Board &board, Rotate R)
+{
+    auto [r, s, c] = R;
+}
+
+void dfs(int curr, Board board)
+{
+    if (curr == cnt)
+    {
+        // 여기서는 Min값만 갱신한다.
+        mn = min(mn, getMinRow(board));
+        return;
+    }
+
+    for (int i = 0; i < cnt; i++)
+    {
+        if (!seen[i])
+        {
+            seen[i] = 1;
+            rotate(board, vRot[i]);
+            dfs(curr + 1, board);
+            seen[i] = 0;
+        }
+    }
+}
 int main()
 {
     int T;
     cin >> T;
     for (int t = 1; t <= T; t++)
     {
-        mn = 9999;
-        cin >> N >> M >> K;
+        int ans = 0;
+        cin >> N >> M >> cnt;
+
         for (int i = 0; i < N; i++)
             for (int j = 0; j < M; j++)
                 cin >> board[i][j];
+        /* 전략
+        1) 회전 연산을 구현
+        2) 마지막에 최솟값 추출 연산을 구현
+        3) 회전을 하는 조합에 대한 순열
 
-        vr.clear();
-        while (K--)
+        */
+        vRot.assign(cnt, {});
+        seen.assign(cnt, 0);
+        for (int i = 0; i < cnt; i++)
         {
-            int r, c, s;
+            int r, s, c;
             cin >> r >> c >> s;
-            vr.push_back({r, c, s});
+            vRot[i] = Rotate{r, c, s};
         }
-        sel.clear();
-        sel.resize(vr.size());
 
-        // 회전연산
-        // 이걸 순열로 풀어야함; 최소를 뽑을 수 있는걸 선택
-        // vr 자체를 그냥 보는게 아니라 순열로 섞어야함
         dfs(0);
-        for (auto p : vr)
-        {
-            auto [r, c, s] = p;
-            Pair topLeft{r - s - 1, c - s - 1};
-            Pair botRight{r + s - 1, c + s - 1};
-            rotate(topLeft, botRight);
-        }
-        cout << "#" << t << " " << mn << "\n";
+        cout << "#" << t << " " << ans << "\n";
     }
-
     return 0;
-}
-
-// N! 모든 경우를 전부 확인해서 최소값을 찾는다
-void dfs(int curr)
-{
-    // 선택을 다 했으면 해당 조합에 대해서 Rotate
-    if (curr == vr.size())
-    {
-        for (int i = 0; i < vr.size(); i++)
-        {
-            auto p = [sel[i]] auto [r, c, s] = p;
-            Pair topLeft{r - s - 1, c - s - 1};
-            Pair botRight{r + s - 1, c + s - 1};
-            rotate(topLeft, botRight);
-            // printAll();
-        }
-        mn = min(mn, getMinRow(N, M));
-        return;
-    }
-
-    for (int i = 0; i < vr.size(); i++)
-    {
-        if (!seen[i])
-        {
-            seen[i] = 1;
-            sel[curr] = i;
-            dfs(curr + 1);
-            seen[i] = 0;
-        }
-    }
-}
-
-void printAll()
-{
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < M; j++)
-            cout << board[i][j] << " ";
-        cout << "\n";
-    }
-}
-
-// 별다른 알고리즘없이 실제로 한칸씩 이동하는건 불가능하다.
-// 벡터로 백업해놓고 한번에 덮어쓰는 방식을 써야할듯
-// 우 -> 하 -> 좌 -> 상 (strict)
-int dc[] = {1, 0, -1, 0};
-int dr[] = {0, 1, 0, -1};
-void rotate(const Pair &st, const Pair &en)
-{
-    /* 전략
-    st+en / 2 ; 즉 중점을 기준으로 모든 좌표를 시계방향회전
-    (1,2) , (5, 6) => (3, 4) */
-    int n = (en.r - st.r) / 2;
-    Pair mid{(en.r + st.r) / 2, (en.c + st.c) / 2};
-    Pair lst = mid;
-    for (int i = 1; i <= n; i++)
-    {
-        // 좌상단 시작점으로 이동
-        // 1. 값을 벡터에 저장
-        lst = Pair{lst.r - 1, lst.c - 1};
-        int sz = (2 * i) * 4;
-        deque<int> dq(sz);
-        dq[0] = board[lst.r][lst.c];
-        int rowSz = 2 * i + 1;
-        for (int dir = 0; dir < 4; dir++)
-        {
-            int nr, nc;
-            for (int d = 1; d < rowSz; d++)
-            {
-                nr = lst.r + dr[dir] * d;
-                nc = lst.c + dc[dir] * d;
-                dq[(dir * (rowSz - 1)) + d] = board[nr][nc];
-            }
-            // 피벗 갱신
-            lst.r = nr;
-            lst.c = nc;
-        }
-
-        // 2. 회전
-        // deque쓰면 링크드리스트라 금방끝나는데
-        // 배열의 회전은?? std::rotate?
-        int back = dq.back();
-        dq.pop_back();
-        dq.push_front(back);
-
-        // 3. 재배치
-        board[lst.r][lst.c] = dq[0];
-        for (int dir = 0; dir < 4; dir++)
-        {
-            int nr, nc;
-            for (int d = 1; d < rowSz; d++)
-            {
-                nr = lst.r + dr[dir] * d;
-                nc = lst.c + dc[dir] * d;
-                board[nr][nc] = dq[(dir * (rowSz - 1)) + d];
-            }
-            // 피벗 갱신
-            lst.r = nr;
-            lst.c = nc;
-        }
-    }
-}
-
-int getMinRow(int N, int M)
-{
-    int row;
-    int mn = 9999;
-    for (int i = 0; i < N; i++)
-    {
-        row = 0;
-        for (int j = 0; j < M; j++)
-            row += board[i][j];
-        mn = min(mn, row);
-    }
-    return mn;
 }
