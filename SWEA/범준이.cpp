@@ -2,54 +2,17 @@
 #include <vector>
 #include <algorithm>
 
-#define LIMIT 60 * 9 // 하루 9시간 제한
 using namespace std;
 int N, M;
+int dist[40][40];
+bool seen[40];
 
-/* 독해
-1. 모든 지점은 3개로 분류됨; 호텔H, 관광지P, 공항A(출발지이자 도착지)
-2. 하루에 9시간 넘게 관광+이동해선 안됨
-3. 같은 호텔에 여러번 머물수 있다
-4. 관광지에는 체류시간과 만족도가 있다
-
-테스트 케이스
-
-1번 줄은 2번 ~ N번 노드까지 간선거리가 표시됨
-2번 줄은 3번 ~ N번 노드까지 간선거리가 표시됨...
-
-Goal: 최대한 만족도가 높은 여행 계획
-*/
 struct Node
 {
-  char c; // A, H, P
-  int t;  // 체류시간
-  int s;  // 체류보상
+  char c;
+  int t; // 소요시간
+  int s; // 만족도
 };
-
-int dist[40][40];
-
-/* 2중 DFS
-    outer DFS는 (m-dayCounter) M depth를 단순히 파고든다
-    inner DFS는 갈 수 있는 모든 경로를 조합처럼 탐색하고
-    호텔에 도착하면 dayM을 갱신한다. 마지막 날에 도달하면 최종 리턴.
-*/
-
-int mx;
-vector<bool> seen;
-void dayM(int m, int s, int travelTime)
-{
-  // 1. 가지치기
-  if (travelTime > LIMIT)
-    return;
-
-  if (M == m)
-  {
-    mx = max(mx, s);
-    return;
-  }
-
-  for (int i = 0; i <)
-}
 
 int main()
 {
@@ -57,47 +20,74 @@ int main()
   cin >> T;
   for (int t = 1; t <= T; t++)
   {
-    int ans;
     cin >> N >> M;
-    // 파이썬 히트맵 느낌?
-    for (int i = 1; i < N; i++)
+    // 간선 거리
+    for (int i = 1; i <= N; i++)
       for (int j = i + 1; j <= N; j++)
       {
-        int d;
-        cin >> d;
-        // 반대도 마찬가지
-        dist[i][j] = d;
-        dist[j][i] = d;
+        cin >> dist[i][j];
+        dist[j][i] = dist[i][j];
       }
 
+    fill(seen, seen + N, 0);
+
+    // 노드명, 체류시간, 만족도
     vector<Node> v(N + 1);
-    vector<bool> seen(N + 1);
     for (int i = 1; i <= N; i++)
     {
-      char c;
-      cin >> c;
-      if (c == 'P')
+      Node n;
+      cin >> n.c;
+      if (n.c == 'P')
       {
-        int s, t;
-        cin >> t >> s;
-        v[i] = {c, t, s};
+        int t, s;
+        cin >> n.t >> n.s;
       }
-      else
-      {
-        v[i] = {c, 0, 0};
-      }
+      v[i] = n;
     }
 
-    /*  그리디?는 아님. 단방향성이 아니라 루프를 돌아서
-      DP?는 개별 경로를 상태로 압축할 수 있어야하는데 고려할게 너무많다
-      완탐?
-      가지치기 (제약)
-        마지막 날에는 반드시 마지막 노드가 A 여야한다
-        그 외의 날에는 마지막 노드가 H 여야한다
-        LIMIT을 넘어가면 가지치기를 한다
+    // 알고리즘;
+    /* 마지막 날이 아닌 날에는 호텔에 체류해야함
+    각 day에 대해서 모든 경로를 탐색하는 경우?
     */
 
-    cout << "#" << t << " " << ans << "\n";
+    dayM(0, 0);
   }
   return 0;
+}
+
+int mx;
+
+// 가지치기를 하지 않으면 마지막 날이 공항이 아니거나
+// 마지막 종착지가 호텔이 아닌것까지 싹다 봐야한다
+// 2중 DFS를 해야하고, 각각에서 가지치기가 필요하다.
+void dayM(int curr, int sum)
+{
+  if (curr == M)
+  {
+    mx = max(mx, sum);
+    return;
+  }
+
+  for (int i = 1; i <= N; i++)
+  {
+    if (!seen[i])
+    {
+      seen[i] = 1;
+      int ss;
+
+      if (curr == M - 1)
+      {
+        // 마지막날에는 공항으로 복귀
+        dayM(curr + 1, sum + ss);
+      }
+
+      else
+      {
+        // 다른 날에는 호텔로 복귀
+        dayM(curr + 1, sum + ss);
+      }
+
+      seen[i] = 0;
+    }
+  }
 }
