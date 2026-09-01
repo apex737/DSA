@@ -1,18 +1,24 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <set>
+#define LIMIT 540
 
 using namespace std;
 int N, M;
 int dist[40][40];
-bool seen[40];
-
 struct Node
 {
   char c;
   int t; // 소요시간
   int s; // 만족도
 };
+
+int mx;
+bool seen[40];
+set<int> hidx;
+int airport;
+vector<Node> v;
 
 int main()
 {
@@ -30,64 +36,82 @@ int main()
       }
 
     fill(seen, seen + N, 0);
-
+    hidx.clear();
     // 노드명, 체류시간, 만족도
-    vector<Node> v(N + 1);
+    v.assign(N + 1, {});
     for (int i = 1; i <= N; i++)
     {
       Node n;
       cin >> n.c;
-      if (n.c == 'P')
-      {
-        int t, s;
+      // 호텔과 공항 인덱스 저장
+      if (n.c == 'A')
+        airport = i;
+      else if (n.c == 'H')
+        hidx.insert(i);
+      else
         cin >> n.t >> n.s;
-      }
+      // 간선거리가 노드의 순서를 따르기 때문에 필수
       v[i] = n;
     }
 
-    // 알고리즘;
-    /* 마지막 날이 아닌 날에는 호텔에 체류해야함
-    각 day에 대해서 모든 경로를 탐색하는 경우?
-    */
-
-    dayM(0, 0);
+    dfs(airport, 0, 0, 0);
+    cout << "#" << t << " " << mx << "\n";
   }
   return 0;
 }
 
-int mx;
-
-// 가지치기를 하지 않으면 마지막 날이 공항이 아니거나
-// 마지막 종착지가 호텔이 아닌것까지 싹다 봐야한다
-// 2중 DFS를 해야하고, 각각에서 가지치기가 필요하다.
-void dayM(int curr, int sum)
+// 마지막 도착 노드를 고정한채로 거기에 도달하는 최적의 경로를 완전탐색하는 문제
+// 현재 위치에서 호텔중 어느 하나쪽으로 가는 경우에 540 이내로 들어올 수 없다면 가지치기
+/**
+ * @param: curr:  현재 노드
+ * @param: day:   며칠
+ * @param: sum:   만족도 누산
+ * @param: usedTime:  540분 이내 리턴 체크용
+ * @attention: baseCase:
+ * @attention: generalCase:
+ */
+void dfs(int curr, int day, int sum, int totalTime)
 {
-  if (curr == M)
-  {
-    mx = max(mx, sum);
-    return;
-  }
-
+  // 다음 노드 탐색
   for (int i = 1; i <= N; i++)
   {
-    if (!seen[i])
+    // 중복 여부 체크
+    if (i == airport)
     {
-      seen[i] = 1;
-      int ss;
-
-      if (curr == M - 1)
+      if (day == M)
       {
-        // 마지막날에는 공항으로 복귀
-        dayM(curr + 1, sum + ss);
+        mx = max(mx, sum);
+        return;
       }
-
+      continue;
+    }
+    // 호텔에 도착한 경우 어떤 경우든지; 일단 다음 날로 넘어감
+    if (hidx.find(i) != hidx.end())
+    {
+      // 호텔까지 간선거리 구하고 유효하다면 들어가고
+      // 유효하지 않으면? 이 경로를 폐기한다.
+      int usedTime = dist[curr][i] + totalTime;
+      if (usedTime <= LIMIT)
+      {
+        dfs(i, day + 1, sum, usedTime);
+      }
       else
       {
-        // 다른 날에는 호텔로 복귀
-        dayM(curr + 1, sum + ss);
+        continue;
       }
+    }
 
-      seen[i] = 0;
+    if (!seen[i])
+    {
+      int nextTime = totalTime + v[i].t + dist[curr][i];
+      if (nextTime <= LIMIT)
+      {
+        seen[i] = 1;
+        // day를 넘기는건 조건이 필요함
+        // 호텔을 만난경우?
+        dfs(i, day, sum + v[i].s, nextTime);
+        seen[i] = 0;
+      }
     }
   }
 }
