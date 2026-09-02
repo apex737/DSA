@@ -1,9 +1,11 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
 #define TIME_LIMIT (60 * 9)
 
 using namespace std;
+typedef unsigned long long ull;
 
 int N, M, T;
 
@@ -11,27 +13,25 @@ int mx;
 bool possible;
 int dist[40][40];
 vector<int> hotels, spots;
-vector<int> byCost, byScore;   // 관광포인트를 최소소요시간 오름차순 / 만족도 내림차순으로
-int cost[40];                  // v를 하나 더 넣을 때 최소로 드는 총 시간
+vector<int> byCost, byScore;
+int cost[40];
+int bitOf[40];                 // 관광포인트 -> 비트 위치
 vector<bool> seen;
 int airport;
 int minHotel[40];
 int totalScore;
 
-struct Node {
-    char c;
-    int t;
-    int s;
-};
+unordered_map<ull, int> memo;  // (day, curr, mask) -> 그 상태에 도달한 최소 소요시간
+
+struct Node { char c; int t; int s; };
 
 vector<Node> nodes;
 vector<int> path, optimalPath;
 
-// 남은 총 시간 budget으로 얻을 수 있는 만족도의 상한
 int upperBound(int budget)
 {
     int k = 0, acc = 0;
-    for (int v : byCost)                  // 싼 것부터 몇 개나 들어갈 수 있는지
+    for (int v : byCost)
     {
         if (seen[v]) continue;
         if (acc + cost[v] > budget) break;
@@ -39,7 +39,7 @@ int upperBound(int budget)
         k++;
     }
     int bound = 0;
-    for (int v : byScore)                 // 그 개수만큼 비싼 점수부터
+    for (int v : byScore)
     {
         if (k == 0) break;
         if (seen[v]) continue;
@@ -49,13 +49,22 @@ int upperBound(int budget)
     return bound;
 }
 
-void dfs(int curr, int day, int sum, int totalTime, int remain)
+void dfs(int curr, int day, int sum, int totalTime, int remain, ull mask)
 {
     if (sum + remain <= mx) return;
 
-    // [가지치기 C] 남은 시간으로 담을 수 있는 최대 만족도 기준 상계
     int budget = (M - day) * TIME_LIMIT + (TIME_LIMIT - totalTime);
     if (sum + upperBound(budget) <= mx) return;
+
+    // [가지치기 D] 같은 (날짜, 위치, 방문집합)에 더 짧은 시간에 온 적이 있으면 버린다
+    ull key = (mask << 9) | ((ull)curr << 3) | (ull)day;
+    auto it = memo.find(key);
+    if (it != memo.end()) {
+        if (it->second <= totalTime) return;
+        it->second = totalTime;
+    } else {
+        memo.emplace(key, totalTime);
+    }
 
     if (day == M && totalTime + dist[curr][airport] <= TIME_LIMIT && sum > mx)
     {
@@ -75,7 +84,8 @@ void dfs(int curr, int day, int sum, int totalTime, int remain)
 
         seen[next] = 1;
         path.push_back(next);
-        dfs(next, day, sum + nodes[next].s, usedTime, remain - nodes[next].s);
+        dfs(next, day, sum + nodes[next].s, usedTime,
+            remain - nodes[next].s, mask | (1ULL << bitOf[next]));
         path.pop_back();
         seen[next] = 0;
     }
@@ -88,7 +98,7 @@ void dfs(int curr, int day, int sum, int totalTime, int remain)
             if (usedTime > TIME_LIMIT) continue;
 
             path.push_back(hotel);
-            dfs(hotel, day + 1, sum, 0, remain);
+            dfs(hotel, day + 1, sum, 0, remain, mask);
             path.pop_back();
         }
     }
@@ -114,6 +124,7 @@ int main()
         nodes.assign(N + 1, {});
         hotels.clear(); spots.clear();
         path.clear(); optimalPath.clear();
+        memo.clear();
         mx = 0; airport = 0; totalScore = 0;
 
         for (int i = 1; i <= N; i++)
@@ -122,6 +133,7 @@ int main()
             cin >> n.c;
             if (n.c == 'P') {
                 cin >> n.t >> n.s;
+                bitOf[i] = (int)spots.size();
                 spots.push_back(i);
                 totalScore += n.s;
             }
@@ -137,7 +149,6 @@ int main()
             minHotel[i] = 1e9;
             for (int h : hotels) minHotel[i] = min(minHotel[i], dist[i][h]);
         }
-
         for (int v : spots)
         {
             int minIn = 1e9;
@@ -151,7 +162,7 @@ int main()
         sort(byScore.begin(), byScore.end(),
              [](int a, int b) { return nodes[a].s > nodes[b].s; });
 
-        if (possible) dfs(airport, 1, 0, 0, totalScore);
+        if (possible) dfs(airport, 1, 0, 0, totalScore, 0ULL);
 
         cout << "#" << t << " " << mx;
         if (possible)
