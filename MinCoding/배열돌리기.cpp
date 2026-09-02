@@ -1,11 +1,12 @@
 #include <iostream>
 #include <vector>
-#include <deque>
-
+#include <algorithm>
 using namespace std;
-int N, M, cnt;
 
-struct Rotate
+int N, M, K;
+int mn = 999;
+
+struct Operation
 {
     int r, c, s;
 };
@@ -15,168 +16,113 @@ struct Board
     int b[55][55];
 };
 
+// 배열을 넘기는 방식
 Board board;
-
-// 연산 주어지면 거기 맞춰서 보드 변경
-// 가장 왼쪽 윗 칸이 (r-s, c-s), 가장 오른쪽 아랫 칸이 (r+s, c+s)인 정사각형을
-// 시계 방향으로 한 칸씩 돌린다
-
-int getMinRow(const Board &board)
+int getVal(const Board &board)
 {
-    int row;
-    int mn = 999;
-    for (int i = 0; i < N; i++)
+    int ret = 999;
+    for (int i = 1; i <= N; i++)
     {
-        row = 0;
-        for (int j = 0; j < M; j++)
-            row += board.b[i][j];
-        mn = min(mn, row);
+        int sum = 0;
+        for (int j = 1; j <= M; j++)
+        {
+            sum += board.b[i][j];
+        }
+        ret = min(ret, sum);
     }
-    return mn;
+    return ret;
 }
 
-int mn;
 vector<bool> seen;
-vector<Rotate> vRot;
+vector<Operation> Ops;
 
-// 보드를 한칸씩 CW 방향 회전
-// 우 -> 하 -> 좌 -> 상
-int dr[] = {0, 1, 0, -1};
-int dc[] = {1, 0, -1, 0};
-
-void dequeCW(deque<int> &dq)
+// (r,c)가 중심이고 연산횟수가 s임
+// 연산을 거듭할 수록 시작점을 좌상단 모서리로 이동시킴
+void rotate(Board &board, const Operation &op)
 {
-    int back = dq.back();
-    dq.pop_back();
-    dq.push_front(back);
-}
-
-void dequeCCW(deque<int> &dq)
-{
-    int front = dq.front();
-    dq.pop_front();
-    dq.push_back(front);
-}
-
-void rotate(Board &board, Rotate R, void (*fp)(deque<int> &dq))
-{
-    // 3, 4, 2 라면 center(3,4)이고 패딩이 2임
-    auto [r, s, c] = R;
-    int tr = r - c, tc = s - c;
-    // 바깥에서 안쪽으로 이동
-    while (c--)
+    int r = op.r - 1;
+    int c = op.c - 1;
+    for (int ss = 0; ss < op.s; ss++, r--, c--)
     {
-        // 1. 단방향 전진 기반 회전 템플릿
-        // 배열의 값을 deque에 넣는다
-        // 포인터 하나를 두고 재활용하는것도 좋을듯?
-        deque<int> dq;
+        int width = 2 * ss + 3;
+        // 1. flatten
+        vector<int> tv;
+        // 오른쪽
+        for (int i = 0; i < width - 1; i++)
+            tv.push_back(board.b[r][c + i]);
+        // 아래쪽
+        for (int i = 0; i < width - 1; i++)
+            tv.push_back(board.b[r + i][c + width - 1]);
+        // 왼쪽
+        for (int i = 0; i < width - 1; i++)
+            tv.push_back(board.b[r + width - 1][c + width - 1 - i]);
+        // 위쪽
+        for (int i = 0; i < width - 1; i++)
+            tv.push_back(board.b[r + width - 1 - i][c]);
 
-        dq.push_back(board.b[tr][tc]);
-        for (int dir = 0; dir < 4; dir++)
-        {
-            int d = 2 * (c + 1) + 1; // 가로길이
-            int nr, nc;
-            for (int dd = 1; dd < d; dd++)
-            {
-                nr = tr + dr[dir] * dd;
-                nc = tc + dc[dir] * dd;
-                dq.push_back(board.b[nr][nc]);
-            }
-            dq.pop_back();
-            tr = nr; // 모서리에 도달하면 피벗을 바꿈
-            tc = nc;
-        }
+        // 2. CW rotate
+        std::rotate(tv.begin(), tv.end() - 1, tv.end());
 
-        // 2. deque의 CW => 여기만 CCW로 바꾸면 됨
-        // 보드를 넘기지 않으려면 복구 로직도 fp로 재활용
-        fp(dq);
-
-        // 3. deque에서 배열로 덮어쓴다.
-        while (!dq.empty())
-        {
-            board.b[tr][tc] = dq.front();
-            dq.pop_front();
-            for (int dir = 0; dir < 4; dir++)
-            {
-                int d = 2 * (c + 1) + 1; // 가로길이
-                int nr, nc;
-                for (int dd = 1; dd < d; dd++)
-                {
-                    // 마지막 원소 건너 뜀
-                    nr = tr + dr[dir] * dd;
-                    nc = tc + dc[dir] * dd;
-                    if (dir == 3 && dd == d - 1)
-                        break;
-                    board.b[nr][nc] = dq.front();
-                    dq.pop_front();
-                }
-                tr = nr;
-                tc = nc;
-            }
-        }
-        // tr, tc는 다시 시작점으로 돌아왔다 => 피벗을 갱신
-        tr++;
-        tc++;
+        // 3. update
+        // i는 매번 초기화 j는 처음만 초기화
+        int i, j;
+        for (i = 0, j = 0; i < width - 1; i++, j++)
+            board.b[r][c + i] = tv[j];
+        // 아래쪽
+        for (i = 0; i < width - 1; i++, j++)
+            board.b[r + i][c + width - 1] = tv[j];
+        // 왼쪽
+        for (i = 0; i < width - 1; i++, j++)
+            board.b[r + width - 1][c + width - 1 - i] = tv[j];
+        // 위쪽
+        for (i = 0; i < width - 1; i++, j++)
+            board.b[r + width - 1 - i][c] = tv[j];
     }
 }
 
-// 보드를 매번 직접 복사함; Depth <= 6 이라서 가능
 void dfs(int curr, Board board)
 {
-    if (curr == cnt)
+    if (curr == K)
     {
-        // 여기서는 Min값만 갱신한다.
-        mn = min(mn, getMinRow(board));
-        // dbgPrint();
+        mn = min(mn, getVal(board));
         return;
     }
 
-    for (int i = 0; i < cnt; i++)
+    for (int i = 0; i < K; i++)
     {
         if (!seen[i])
         {
             seen[i] = 1;
-            rotate(board, vRot[i], dequeCW);
-            dfs(curr + 1, board);
+            Board next = board;
+            rotate(next, Ops[i]);
+            dfs(curr + 1, next);
             seen[i] = 0;
         }
     }
 }
-
-void dbgPrint()
-{
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < M; j++)
-            cout << board.b[i][j] << " ";
-        cout << "\n";
-    }
-}
-
 int main()
 {
     int T;
     cin >> T;
     for (int t = 1; t <= T; t++)
     {
-        int ans = 0;
-        cin >> N >> M >> cnt;
 
+        cin >> N >> M >> K;
+        mn = 999;
         for (int i = 1; i <= N; i++)
             for (int j = 1; j <= M; j++)
                 cin >> board.b[i][j];
 
-        vRot.assign(cnt, {});
-        seen.assign(cnt, 0);
-        for (int i = 0; i < cnt; i++)
+        Ops.assign(K, {});
+        for (int i = 0; i < K; i++)
         {
-            int r, s, c;
-            cin >> r >> c >> s;
-            vRot[i] = Rotate{r, c, s};
+            cin >> Ops[i].r >> Ops[i].c >> Ops[i].s;
         }
 
+        seen.assign(K, 0);
+
         dfs(0, board);
-        cout << "#" << t << " " << ans << "\n";
+        cout << "#" << t << " " << mn << "\n";
     }
     return 0;
 }
