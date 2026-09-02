@@ -10,10 +10,12 @@ int N, M, T;
 int mx;
 bool possible;
 int dist[40][40];
-vector<int> hotels, spots;     // spots: 관광포인트 인덱스만 모아둔 리스트
+vector<int> hotels, spots;
+vector<int> byCost, byScore;   // 관광포인트를 최소소요시간 오름차순 / 만족도 내림차순으로
+int cost[40];                  // v를 하나 더 넣을 때 최소로 드는 총 시간
 vector<bool> seen;
 int airport;
-int minHotel[40];              // v -> 가장 가까운 호텔까지의 거리
+int minHotel[40];
 int totalScore;
 
 struct Node {
@@ -25,12 +27,36 @@ struct Node {
 vector<Node> nodes;
 vector<int> path, optimalPath;
 
+// 남은 총 시간 budget으로 얻을 수 있는 만족도의 상한
+int upperBound(int budget)
+{
+    int k = 0, acc = 0;
+    for (int v : byCost)                  // 싼 것부터 몇 개나 들어갈 수 있는지
+    {
+        if (seen[v]) continue;
+        if (acc + cost[v] > budget) break;
+        acc += cost[v];
+        k++;
+    }
+    int bound = 0;
+    for (int v : byScore)                 // 그 개수만큼 비싼 점수부터
+    {
+        if (k == 0) break;
+        if (seen[v]) continue;
+        bound += nodes[v].s;
+        k--;
+    }
+    return bound;
+}
+
 void dfs(int curr, int day, int sum, int totalTime, int remain)
 {
-    // [가지치기 B] 남은 만족도를 전부 먹어도 최고 기록을 못 넘으면 버린다
     if (sum + remain <= mx) return;
 
-    // 마지막 날이면 지금 위치에서 공항으로 복귀 가능한지 확인
+    // [가지치기 C] 남은 시간으로 담을 수 있는 최대 만족도 기준 상계
+    int budget = (M - day) * TIME_LIMIT + (TIME_LIMIT - totalTime);
+    if (sum + upperBound(budget) <= mx) return;
+
     if (day == M && totalTime + dist[curr][airport] <= TIME_LIMIT && sum > mx)
     {
         mx = sum;
@@ -44,7 +70,6 @@ void dfs(int curr, int day, int sum, int totalTime, int remain)
         int usedTime = totalTime + dist[curr][next] + nodes[next].t;
         if (usedTime > TIME_LIMIT) continue;
 
-        // [가지치기 A] next까지 갔을 때 오늘의 종착지로 돌아올 시간이 남는가
         int exitTime = (day < M) ? minHotel[next] : dist[next][airport];
         if (usedTime + exitTime > TIME_LIMIT) continue;
 
@@ -87,13 +112,9 @@ int main()
 
         seen.assign(N + 1, 0);
         nodes.assign(N + 1, {});
-        hotels.clear();
-        spots.clear();
-        path.clear();
-        optimalPath.clear();
-        mx = 0;
-        airport = 0;
-        totalScore = 0;
+        hotels.clear(); spots.clear();
+        path.clear(); optimalPath.clear();
+        mx = 0; airport = 0; totalScore = 0;
 
         for (int i = 1; i <= N; i++)
         {
@@ -109,16 +130,26 @@ int main()
             nodes[i] = n;
         }
 
-        // 모든 간선이 240분 이하이므로, 호텔이 하나라도 있으면(또는 M==1이면)
-        // 관광 없이 호텔만 찍는 경로가 항상 성립한다
         possible = (M == 1) || !hotels.empty();
 
         for (int i = 1; i <= N; i++)
         {
             minHotel[i] = 1e9;
-            for (int h : hotels)
-                minHotel[i] = min(minHotel[i], dist[i][h]);
+            for (int h : hotels) minHotel[i] = min(minHotel[i], dist[i][h]);
         }
+
+        for (int v : spots)
+        {
+            int minIn = 1e9;
+            for (int u = 1; u <= N; u++)
+                if (u != v) minIn = min(minIn, dist[u][v]);
+            cost[v] = nodes[v].t + minIn;
+        }
+        byCost = byScore = spots;
+        sort(byCost.begin(), byCost.end(),
+             [](int a, int b) { return cost[a] < cost[b]; });
+        sort(byScore.begin(), byScore.end(),
+             [](int a, int b) { return nodes[a].s > nodes[b].s; });
 
         if (possible) dfs(airport, 1, 0, 0, totalScore);
 
