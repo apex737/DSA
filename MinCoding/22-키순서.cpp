@@ -19,7 +19,7 @@ void forward(int cur)
     4->{2,6}
     5->{4,2} */
 {
-    if (fwd[cur].size() == 0) return;
+    // if (fwd[cur].size() == 0) return;
     for (int nxt : fwd[cur])
     {
         if (visited[nxt]) continue;
@@ -31,7 +31,7 @@ void forward(int cur)
 
 void backward(int cur)
 {
-    if (bwd[cur].size() == 0) return;
+    // if (bwd[cur].size() == 0) return;
     for (int nxt : bwd[cur])
     {
         if (visited[nxt]) continue;

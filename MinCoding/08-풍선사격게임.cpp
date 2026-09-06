@@ -1,34 +1,74 @@
-#include <iostream>
-#include <algorithm>
-#include <vector>
-
-/*
-전략;
-벡터에 넣고 소팅한다음에 N-1번째를 계속 터뜨리면서 누산하면 될거라고
-그리디로 생각하면 망한다. 현재 위치가 계산에 포함되지 않기 때문에
-이걸 터뜨리는게 이득일지 확신이 없기 때문이다.
-
-DFS;;
-
-드랍하면 자동으로 채워주는 set?.. 아이템이 복수라면 ?
-그럼 멀티셋?
-
-결론은 set이 맞다.
-*/
+#include <bits/stdc++.h>
 using namespace std;
-
 int N;
-int main()
-{
-    int T;
-    cin >> T;
-    for (int t = 1; t <= T; t++)
+int K[10];              // 풍선 값
+/** 
+ *@brief 중간 상태가 반복된다면 메모이제이션이다.
+ *@example memo[1100_1111_00] 터지는 중간 상태라도 상관없다. 일단 이 상태로 도달하면
+ 메모이제이션에 의해 바로 반환 가능하기 때문에. 
+*/
+int memo[1 << 10];      // memo[mask] = mask 집합에서 얻는 최대 점수 (-1=미계산)
+
+int getGain(int right, int left, int st) {
+    int gain;
+    bool foundR = right>=0;
+    bool foundL = left>=0;
+    if(foundR && foundL) gain = K[right] * K[left]; 
+    else if (foundL) gain = K[left]; 
+    else if (foundR) gain = K[right]; 
+    else gain = K[st];
+    return gain;
+}
+
+// mask: 아직 안 터진 풍선들의 집합. 그 집합의 최대 점수를 반환.
+int go(int mask) {
+    // TODO ①: 다 터졌으면(mask==0) 0 반환
+    if(mask==0) 
+        return 0;
+    // TODO ②: 이미 계산된 mask면 memo 반환 (캐시)
+    if(memo[mask] != -1) 
+        return memo[mask];
+    // TODO ③: mask에 살아있는 각 풍선 i를 "이번에 터뜨릴 것"으로 시도
+    //   - i의 왼쪽/오른쪽 최근접 생존 이웃을 찾는다
+    //   - 규칙대로 이번 점수 gain 계산
+    //   - gain + go(i를 뺀 집합) 으로 최댓값 갱신
+    int mx = 0;
+    for(int i=0; i<N; i++)
     {
+        if(mask & (1 << i)) {
+            int right = -1, left = -1;
+            // find right
+            int j;
+            for(j=i+1; j < N; j++) {
+                if(mask & (1 << j)) {
+                    right = j; break;
+                }
+            }
+            // find left
+            for(j=i-1; j >= 0; j--) {
+                if(mask & (1 << j)) {
+                    left = j; break;
+                }
+            }
+
+            int other = mask ^ (1 << i);
+            mx = max(mx, getGain(right, left, i) + go(other));
+        }
+    }
+
+    // TODO ④: memo에 저장하고 반환
+    return memo[mask] = mx;
+}
+int main() {
+    int T; cin >> T;
+    for (int tc = 1; tc <= T; tc++) {
         cin >> N;
-        vector<int> v(N);
-        for (int i = 0; i < N; i++)
-            cin >> v[i];
-        sort(v.begin(), v.end());
+        // TODO ⑤: 풍선 값 입력, memo 전부 -1로 초기화
+        for(int i=0; i<N; i++) 
+            cin >> K[i];
+        memset(memo, -1, sizeof(memo));
+        // TODO ⑥: go(전체 집합) 출력
+        cout << "#" << tc << " " << go((1<<N)-1) << "\n";
     }
     return 0;
 }
