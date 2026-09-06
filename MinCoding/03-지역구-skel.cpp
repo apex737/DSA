@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-// 연결성 검사는 DFS로 한다. A에 속한 아무 마을에서 출발해, A 안의 인접 마을만 타고 DFS.
+// A에 속한 아무 마을에서 출발해, A 안의 인접 마을만 타고 DFS.
 // 방문한 개수가 A의 크기와 같으면 연결된 것이다.
 
 int N;
@@ -27,21 +27,19 @@ void dfs(int u, int mask) {
 }
 
 bool connected(int mask) {
-    // TODO ①: mask가 비어 있으면 false
-    if (mask == 0) return false;
 
-    // TODO ②: mask에 속한 마을 하나를 시작점으로 잡는다
+    // TODO 1: mask에 속한 마을 하나를 시작점으로 잡는다
     // ex. mask = 1011_0111 에서 아무 1이나 하나만 골라 시작점으로 삼는다.
     int st = -1;
     for (int i = 0; i < N; i++) {
         if (mask & (1 << i)) { st = i; break; }
     }
 
-    // TODO ③: 시작점에서 DFS. 단, mask에 속한 마을로만 이동한다.
+    // TODO 2: 시작점에서 DFS. 단, mask에 속한 마을로만 이동한다.
     visited = 0;
     dfs(st, mask);
 
-    // TODO ④: 방문한 마을 수 == mask의 마을 수 이면 연결됨
+    // TODO 3: 방문한 마을 수 == mask의 마을 수 이면 연결됨
     return visited == mask;
 }
 
@@ -52,16 +50,16 @@ int main() {
     for (int t = 1; t <= T; t++) {
         cin >> N;
         mn = 1e9;
-        // TODO ⑤: 인접 행렬 N×N 읽기
+        // TODO 4: 인접 행렬 N×N 읽기
         for(int i=0; i<N; i++)
             for(int j=0; j<N; j++)
                 cin >> adj[i][j];
-        // TODO ⑥: 유권자 수 N개 읽기
+        // TODO 5: 유권자 수 N개 읽기
         for(int i=0; i<N; i++) cin >> p[i];
-        // TODO ⑦: mask = 1 .. (1<<N)-2 를 전부 시도
-        //         ⑦-a: other = 전체 - mask
-        //         ⑦-b: 둘 다 connected 인지 검사, 아니면 건너뛴다
-        //         ⑦-c: 양쪽 유권자 합의 차이의 절댓값으로 최솟값 갱신
+        // TODO 6: mask = 1 .. (1<<N)-2 를 전부 시도
+        //         6-a: other = 전체 - mask
+        //         6-b: 둘 다 connected 인지 검사, 아니면 건너뛴다
+        //         6-c: 양쪽 유권자 합의 차이의 절댓값으로 최솟값 갱신
 
         int mask;
         // 모든 분할 경우의 수를 완전 탐색

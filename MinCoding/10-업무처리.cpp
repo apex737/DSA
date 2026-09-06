@@ -9,10 +9,10 @@ using namespace std;
 int N;
 int t[55];
 /**
- * @example: depend[1] = {3,4}; 1번 업무는 3,4번이 끝나야 시작 가능하다.
+ * @example: adj[1] = {3,4}; 1번 업무는 3,4번이 끝나야 시작 가능하다.
  */
-vector<int> depend[55]; // depend[u]	=	u가	끝나야 시작할 수 있는	업무들
-int indeg[55];          // 선행업무 개수
+vector<int> adj[55]; // adj[u] -> { tasks }; u가	끝나야 시작할 수 있는	업무들
+int indeg[55];       // 선행업무 개수
 
 /**
  * @brief: cc번째에 코코를 쓸 때 소요시간
@@ -22,7 +22,7 @@ int indeg[55];          // 선행업무 개수
  */
 int critical(int cc)
 {
-  // 1. 원본 indeg를 수정하지 않기 위해, 복사본을 사용
+  // 1. 원본 indeg를 수정하지 않기 위해 복사본을 사용
   vector<int> cpyDeg(N + 1);
   for (int i = 1; i <= N; i++)
     cpyDeg[i] = indeg[i];
@@ -39,16 +39,15 @@ int critical(int cc)
   int cnt = 0;
   while (!q.empty())
   {
-    int cur = q.front();
-    q.pop();
+    int cur = q.front(); q.pop();
     cnt++;
 
     // D[cur]: cur 번째 업무의 최종 완료시간
-    /** @example: depend[1] = {2,3}, depend[2] = {4}, depend[3] = {4}
+    /** @example: adj[1] = {2,3}, adj[2] = {4}, adj[3] = {4}
     *         2 (cost: 5)
-            /
-        1 (cost: 2) -- → 4 (cost: 3)
-            \
+            /           \
+        1 (cost: 2)      4 (cost: 3)
+            \           /
               3 (cost: 8)
 
       D[1] = 2,
@@ -59,13 +58,14 @@ int critical(int cc)
     int cost = (cur == cc) ? t[cur] / 2 : t[cur];
     D[cur] += cost;
 
-    /** @brief: D-table을 업데이트한다. cur -> nxt 간선(의존성)을 하나씩 제거하고, 전부 제거되면 큐에 넣는다.
-     * @param: nxt: cur에 의존하고 있는 인덱스
+    /** @brief: D-table을 업데이트한다. cur -> nxt 간선(의존성)을 하나씩 제거하고
+     *          전부 제거되면 큐에 넣는다.
+     * @param: nxt: cur에 의존하는 인덱스
      * @param: cpyDeg[nxt]: nxt를 가리키는 정점의 개수
      * @param: D[nxt]: nxt 번째 업무의 최종 완료시간
      *
      */
-    for (int nxt : depend[cur])
+    for (int nxt : adj[cur])
     {
       D[nxt] = max(D[nxt], D[cur]);
       cpyDeg[nxt]--;
@@ -96,7 +96,7 @@ void input()
     {
       int x;
       cin >> x;
-      depend[x].push_back(i);
+      adj[x].push_back(i);
       indeg[i]++;
     }
   }
@@ -107,7 +107,7 @@ void init()
   cin >> N;
   for (int i = 1; i <= N; i++)
   {
-    depend[i].clear();
+    adj[i].clear();
     indeg[i] = 0;
   }
 }
@@ -128,7 +128,7 @@ int main()
       continue;
     }
 
-    // 2. cc= 1~N에서 최솟값 출력
+    // 2. cc= 1~N 에서 최솟값 출력
     int mn = 1e9;
     for (int i = 1; i <= N; i++)
       mn = min(mn, critical(i));

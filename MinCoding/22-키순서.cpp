@@ -1,66 +1,86 @@
 #include <iostream>
-#include <map>
-#include <set>
 #include <vector>
+#include <algorithm>
+#include <cstring>
+#include <queue>
 
 using namespace std;
 
-/*
-자신의 키를 알수 있는 정점
-내 이하 정점을 전부 흡수하면서,
-내 이상 정점을 전부 가리키면 된다
-
-흡수한다=> indegree?
-개별 노드는 각자만의 포인팅 벡터를 가짐
-*/
-map<int, vector<int>> pointing;
-map<int, set<int>> pointed;
-/*
-두 벡터를 합했을때 전체가 되면 성공
-
-
-*/
-
 int N, M, ans;
+
+vector<vector<int>> fwd, bwd;
+int visited[505];
+int fwdCnt, bwdCnt;
+
+void forward(int cur)
+/* fwd[i] 스캔해서 cur에 의존하는 자식 정점을 탐색
+    1->{5}
+    3->{4}
+    4->{2,6}
+    5->{4,2} */
+{
+    if (fwd[cur].size() == 0) return;
+    for (int nxt : fwd[cur])
+    {
+        if (visited[nxt]) continue;
+        visited[nxt] = 1;
+        fwdCnt++;
+        forward(nxt);
+    }
+}
+
+void backward(int cur)
+{
+    if (bwd[cur].size() == 0) return;
+    for (int nxt : bwd[cur])
+    {
+        if (visited[nxt]) continue;
+        visited[nxt] = 1;
+        bwdCnt++;
+        backward(nxt);
+    }
+}
+
 int main()
 {
-  int T;
-  cin >> T;
-  for (int t = 1; t <= T; t++)
-  {
-    cin >> N >> M;
-    ans = 0;
-    int st, en;
-    for (int i = 0; i < M; i++)
+    int T;
+    cin >> T;
+    for (int t = 1; t <= T; t++)
     {
-      cin >> st >> en;
-      // 포인팅
-      pointing[st].push_back(en);
-      pointed[en].insert(st);
+        cin >> N >> M;
+        ans = 0;
+        int u, v;
+        fwd.assign(N + 1, {});
+        bwd.assign(N + 1, {});
+
+
+        for (int i = 0; i < M; i++)
+        {
+            cin >> u >> v;
+            fwd[u].push_back(v);
+            bwd[v].push_back(u);
+        }
+
+        /* Ex
+          1->{5}
+          3->{4}
+          4->{2,6}
+          5->{2,4}
+
+          1. fwd에서 하나 꺼내서 visited 마킹하면서 dfs */
+
+        for (int cur = 1; cur <= N; cur++)
+        {
+            fwdCnt = bwdCnt = 0;
+            memset(visited, 0, sizeof(visited));
+            visited[cur] = 1;
+            // cnt++;
+            forward(cur);
+            backward(cur);
+            if (fwdCnt + bwdCnt == N - 1) ans++;
+        }
+        cout << "#" << t << " " << ans << "\n";
     }
 
-    // 흡수관계 정리해서 pointed의 의미를 확장
-    // 4를 5가 가리키는데, 그 5를 1이 가리키니까,
-    // 4는 {1, 5}가 가리킨다.
-    // 즉, 기존 4.pointed = {3, 5} 에서, 5.pointed의 {1}을 결합
-    for (int i = 0; i < N; i++)
-    {
-      for (auto si : pointed[i])
-      {
-        // 1. 3, 5의 의존성을 확인한다
-        auto innerSet = pointed[si];
-        // 2. pointed[i]에 합친다
-        pointed[i].insert(innerSet.begin(), innerSet.end());
-      }
-    }
-    for (int i = 0; i < N; i++)
-    {
-      if (pointing.size() + pointed.size() == N)
-        ans++;
-    }
-
-    cout << "#" << t << " " << ans << "\n";
-  }
-
-  return 0;
+    return 0;
 }
