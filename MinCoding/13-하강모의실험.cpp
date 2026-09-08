@@ -14,7 +14,10 @@ int main()
     cin >> N;
     for(int i=0; i<N; i++)
       for(int j=0; j<N; j++)
+      {
         cin >> board[i][j];
+        rotated[i][j]=0;
+      }
     
     // 1. 하강
     // 2. 우측하강.. 을 할수도 있지만.. 떨구는 시뮬레이션 함수를
