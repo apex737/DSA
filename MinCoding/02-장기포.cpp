@@ -30,6 +30,7 @@ void dfs(int cur, Pos piv)
     int nr, nc, d;
     bool found = false;
     /* 무한루프에서는 하나의 태스크만 수행하고 완료가 되자마자 break
+      그냥 무지성 break 걸고, 아니다 싶은곳을 제거하는게 정신건강에 좋음
       태스크 완료 상태는 플래그로 관리 */
 
     // 무한루프 1. 첫번째 쫄 찾기
@@ -70,7 +71,7 @@ void dfs(int cur, Pos piv)
       else
       {
         dfs(cur + 1, {nr, nc});
-        // break;  -> 빈칸 스캔은 필요하니까 여기는 break 안함
+        // break;  -> 빈칸 스캔은 필요하니까 여기는 break 제거
       }
     }
   }

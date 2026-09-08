@@ -110,9 +110,9 @@ void update(Character &ch, const Pos &nxt)
   }
 }
 
+// 동점시 스캔순서는 배열스캔방향
 int main()
 {
-  // 동점시 스캔순서는 배열스캔방향
   cin >> N;
   int sr, sc;
   sr = sc = 0;
@@ -129,7 +129,7 @@ int main()
 
   Character ch = {sr, sc, 2, 0, 0};
   res = 0;
-  board[sr][sc] = 0;
+  board[sr][sc] = 0;  // <-- 이거 놓쳐서 디버깅 2시간 함
 
   while (isReachable(ch))
   {
@@ -140,6 +140,5 @@ int main()
   }
 
   cout << ch.t << "\n";
-  // bfs 결과 피드백하면서 반복
   return 0;
 }

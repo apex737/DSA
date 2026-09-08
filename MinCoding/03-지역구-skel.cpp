@@ -8,7 +8,7 @@ int N;
 int adj[10][10];   // adj[i][j] = 1 이면 마을 i와 j가 인접
 int p[10];         // p[i] = 마을 i의 유권자 수
 int mn;
-int visited;       // 방문 표시를 비트마스크로 관리 (배열 초기화 불필요)
+int visited;       // 방문 표시를 비트마스크로 관리 
 
 // u에서 시작해 mask 안의 마을로만 이동하는 DFS. 방문할 때마다 visited에 표시.
 /**
@@ -19,9 +19,9 @@ int visited;       // 방문 표시를 비트마스크로 관리 (배열 초기�
 void dfs(int u, int mask) {
     visited |= (1 << u);    // 방문표식
     for (int v = 0; v < N; v++) {
-        if (!(mask & (1 << v)))   continue;  // 다른 지역구 마을 → 못 지나감
-        if (!adj[u][v])           continue;  // 길이 없음
-        if (visited & (1 << v))   continue;  // 이미 방문
+        if (!adj[u][v])           continue;  // (Out Of Bound)  길이 없음
+        if (visited & (1 << v))   continue;  // (visited)       이미 방문
+        if (!(mask & (1 << v)))   continue;  // (장애물)         다른 지역구 마을 → 못 지나감
         dfs(v, mask);
     }
 }
