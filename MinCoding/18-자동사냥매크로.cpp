@@ -15,7 +15,7 @@ struct Character
 
 struct Pos
 {
-  int r, c;
+  int r, c, d;
 };
 
 int dr[] = {1, 0, -1, 0};
@@ -24,11 +24,11 @@ int dc[] = {0, 1, 0, -1};
 vector<Pos> reachable;
 int res;
 // 1. Reachable 후보 리스트 (BFS Flood Fill)
-// 나보다 레벨 작은 몬스터 만나면 위치 벡터에 저장
+// 나보다 레벨 작은 몬스터 만나면 벡터에 저장
 bool isReachable(const Character &ch)
 {
-  queue<Character> q;
-  q.push(ch);
+  queue<Pos> q;
+  q.push({ch.r, ch.c, 0}); // 캐릭터 위치 기준으로 거리 재계산
   visited[ch.r][ch.c] = 1;
   while (!q.empty())
   {
@@ -38,18 +38,22 @@ bool isReachable(const Character &ch)
     {
       int nr = cur.r + dr[i];
       int nc = cur.c + dc[i];
+      // B ound
       if (nr < 0 || nc < 0 || nr >= N || nc >= N)
         continue;
+      // F ence: 나보다 레벨 높으면
       if (board[nr][nc] > ch.lv)
         continue;
-      if (visited[nr][nc] == 1)
+      // S een
+      if (visited[nr][nc])
         continue;
       visited[nr][nc] = 1;
-      if (board[nr][nc] > 0)
+      // 도달가능한, 나보다 레벨이 낮은 몬스터 위치를 벡터에 저장
+      if (board[nr][nc] > 0 && board[nr][nc] < ch.lv)
       {
-        reachable.push_back({nr, nc});
+        reachable.push_back({nr, nc, cur.d + 1});
       }
-      q.push({nr, nc, ch.lv, ch.exp, ch.t + 1});
+      q.push({nr, nc, cur.d + 1});
     }
   }
   if (reachable.size() == 0)
@@ -57,37 +61,31 @@ bool isReachable(const Character &ch)
   return true;
 }
 
-int dist(const Pos &p1, const Pos &p2)
-{
-  return abs(p1.r - p2.r) + abs(p2.c - p1.c);
-}
-
 // 2. 최종선택 (거리, 동점처리)
 /**
- * @param r은 도달가능한 몬스터의 위치를 들고 있는 벡터
- * @return 최종 결정된 위치
+ * @param mPos은 도달가능한 몬스터의 위치를 들고 있는 벡터
+ * @return 최종 선택된 몬스터 위치
  */
-Pos select(const vector<Pos> &r, const Character &ch)
+Pos select(const vector<Pos> &mPos, const Character &ch)
 {
   // 사냥할 수 있는 몬스터가 1 마리일 경우는 해당 몬스터를 사냥합니다.
-  if (r.size() == 1)
+  if (mPos.size() == 1)
   {
-    return r[0];
+    return mPos[0];
   }
   // 사냥할 수 있는 몬스터가 1 마리보다 많다면, 거리가 가까운 몬스터를 사냥합니다.
   Pos ret;
-  int mn = 1e9;
-  for (auto p : r)
+  int mn = 21e8;
+  for (auto p : mPos)
   {
     // 1. 거리비교
-    int d = dist(p, {ch.r, ch.c});
-    if (mn > d)
+    if (mn > p.d)
     {
-      mn = d;
-      ret = {ch.r, ch.c};
+      mn = p.d;
+      ret = p;
     }
     // 2. 동점처리
-    else if (mn == d)
+    else if (mn == p.d)
     {
       // 거리가 가까운 몬스터가 여러마리이면, 가장 위에 있는 몬스터를 ,
       // 그러한 몬스터도 여러마리면, 가장 왼쪽의 몬스터를 사냥합니다.
@@ -98,10 +96,10 @@ Pos select(const vector<Pos> &r, const Character &ch)
 
   return ret;
 }
-// 3. 상태 갱신
+// 3. 캐릭터 상태 갱신
 void update(Character &ch, const Pos &nxt)
 {
-  ch.t += dist(nxt, {ch.r, ch.c}); // 일단 도달 가능하면 맨하탄거리임
+  ch.t += nxt.d;
   ch.r = nxt.r;
   ch.c = nxt.c;
   board[ch.r][ch.c] = 0;
@@ -116,21 +114,22 @@ int main()
 {
   // 동점시 스캔순서는 배열스캔방향
   cin >> N;
-  int str, stc;
-  str = stc = 0;
+  int sr, sc;
+  sr = sc = 0;
   for (int i = 0; i < N; i++)
     for (int j = 0; j < N; j++)
     {
       cin >> board[i][j];
       if (board[i][j] == 9)
       {
-        str = i;
-        stc = j;
+        sr = i;
+        sc = j;
       }
     }
 
-  Character ch = {str, stc, 2, 0, 0};
+  Character ch = {sr, sc, 2, 0, 0};
   res = 0;
+  board[sr][sc] = 0;
 
   while (isReachable(ch))
   {
