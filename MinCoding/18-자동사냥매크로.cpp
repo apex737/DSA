@@ -91,7 +91,6 @@ Pos select(const vector<Pos> &r, const Character &ch)
     {
       // 거리가 가까운 몬스터가 여러마리이면, 가장 위에 있는 몬스터를 ,
       // 그러한 몬스터도 여러마리면, 가장 왼쪽의 몬스터를 사냥합니다.
-      // Tip. else if 는 OR로 묶을 수 있다
       if (ret.r > p.r || (ret.r == p.r && ret.c > p.c))
         ret = p;
     }
