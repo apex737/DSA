@@ -5,35 +5,34 @@ using namespace std;
 
 int N;
 int adj[14][14];
-int visited;
+int visited[14];
 int mn = INT_MAX;
-void dfs(int cur, int sum)
-{
-    if (sum >= mn)
-        return;
+bool first_flag = true;
 
-    // 처음에 방문표식을 하는 대신에 마지막 돌아오는 간선비용을 더해준다
-    if (/* cur == 0 && */ visited == (1 << N) - 1)
+void dfs(int cur, int dist, int cnt)
+{
+    if (cur == 1 && !first_flag)
     {
-        if (adj[cur][0])
+        if (cnt == N && dist < mn)
         {
-            mn = min(mn, sum + adj[cur][0]);
+            mn = dist;
         }
         return;
     }
-
-    for (int nxt = 0; nxt < N; nxt++)
+    else
     {
+        return;
+    }
+
+    for (int nxt = 1; nxt <= N; nxt++)
+    {
+        if (visited[nxt])
+            continue;
         if (!adj[cur][nxt])
             continue;
-        if (!(visited & (1 << nxt)))
-        {
-            visited |= (1 << nxt);
-            dfs(nxt, sum + adj[cur][nxt]);
-            visited &= ~(1 << nxt);
-        }
     }
 }
+
 int main()
 {
     cin >> N;
@@ -41,9 +40,6 @@ int main()
         for (int j = 0; j < N; j++)
             cin >> adj[i][j];
 
-    visited |= (1 << 0);
-    dfs(0, 0);
-    visited &= ~(1 << 0);
-    cout << mn << "\n";
+    dfs(1, 0, 0);
     return 0;
 }
