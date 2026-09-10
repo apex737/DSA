@@ -64,76 +64,72 @@ void simulate()
 {
   int st, en;
   Block cur{0, 0, 1, 1.0f}, nxt;
-  bool nxtFlag = false;
   for (int j = 0; j < N; j++)
   {
     // 뭐가 있으면 떨군다
     if (!board[0][j])
       continue;
 
-    // 1. 최초 1 위치를 확인
-    for (st = cur.st + 1;; st++)
+    while (cur.en < N)
     {
-      if (board[st][j])
-        break;
-      if (st >= N)
+      // 1. 최초 1 위치를 확인
+      for (st = cur.en + 1;; st++)
       {
-        nxtFlag = true;
-        break;
-      }
-    }
-    if (nxtFlag)
-      continue;
-
-    // 2. 얼마나 붙어있는지 확인하면서 en 갱신
-    for (en = st + 1;; en++)
-    {
-      if (!board[en][j])
-      {
-        nxt.en = en - 1;
-        break;
+        if (board[st][j])
+          break;
+        if (st >= N)
+          goto NextJS;
       }
 
-      if (en >= N) // 블럭이 바닥에 붙어있음
+      // 2. 얼마나 붙어있는지 확인하면서 en 갱신
+      for (en = st + 1;; en++)
       {
-        // 기존 블럭을 위에 붙이고 마무리
-        // 기존 블럭의 시작/끝, 다음 블럭의 시작/끝 위치가 필요하다
-        // 그래야 기존 블럭을 0으로 밀고, 다음블럭에 붙일수 있다.
-        for (int i = cur.st; i < cur.size; i++)
-          board[i][j] = 0;
-        // nxt.st 위쪽에 반대방향으로 쭉 붙여준다
-        for (int i = st - cur.size; i < cur.size; i++)
+        if (!board[en][j])
         {
-          board[i][j] = 1;
+          nxt.en = en - 1;
+          break;
         }
-        nxtFlag = true;
-        break; // ?
+
+        if (en >= N) // 블럭이 바닥에 붙어있음
+        {
+          // 기존 블럭을 위에 붙이고 마무리
+          // 기존 블럭의 시작/끝, 다음 블럭의 시작/끝 위치가 필요하다
+          // 그래야 기존 블럭을 0으로 밀고, 다음블럭에 붙일수 있다.
+          for (int i = cur.st; i < cur.size; i++)
+            board[i][j] = 0;
+          // nxt.st 위쪽에 반대방향으로 쭉 붙여준다
+          for (int i = st - cur.size; i < cur.size; i++)
+          {
+            board[i][j] = 1;
+          }
+          goto NextJS;
+        }
       }
+
+      nxt.size = en - st;
+
+      // 3. 파워 계산하고 블럭 사이즈와 비교
+      for (int i = 0; i < st - 1; i++)
+        cur.power *= 1.9f;
+      // 3-1. 블럭이 더 크면 continue
+      if (cur.power < nxt.size)
+        goto NextJS;
+
+      // 기존 블럭을 위에 붙이고 마무리
+      for (int i = cur.st; i < cur.size; i++)
+        board[i][j] = 0;
+      // nxt.st 위쪽에 붙여준다
+      nxt.st = st - cur.size;
+      for (int i = nxt.st; i < cur.size; i++)
+      {
+        board[i][j] = 1;
+      }
+      // 다음 블럭 갱신
+      nxt.power = cur.power + nxt.size;
+      nxt.size = nxt.en - nxt.st + 1;
+      cur = nxt;
     }
-    if (nxtFlag)
-      continue;
 
-    nxt.size = en - st + 1;
-
-    // 3. 파워 계산하고 블럭 사이즈와 비교
-    for (int i = 0; i < st - 1; i++)
-      cur.power *= 1.9f;
-    // 3-1. 블럭이 더 크면 continue
-    if (cur.power > nxt.size)
-      continue;
-
-    // 기존 블럭을 위에 붙이고 마무리
-    for (int i = cur.st; i < cur.size; i++)
-      board[i][j] = 0;
-    // nxt.st 위쪽에 붙여준다
-    nxt.st = st - cur.size;
-    for (int i = nxt.st; i < cur.size; i++)
-    {
-      board[i][j] = 1;
-    }
-    // 다음 블럭 갱신
-    nxt.power = cur.power + nxt.size;
-    nxt.size = nxt.en - nxt.st + 1;
-    cur = nxt;
+  NextJS:;
   }
 }
