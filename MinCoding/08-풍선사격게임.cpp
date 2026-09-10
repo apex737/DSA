@@ -22,7 +22,6 @@ int getGain(int right, int left, int st) {
 
 // mask: 아직 안 터진 풍선들의 집합. 그 집합의 최대 점수를 반환.
 int go(int mask) {
-    // TODO ①: 다 터졌으면(mask==0) 0 반환
     if(mask==0) 
         return 0;
     // TODO ②: 이미 계산된 mask면 memo 반환 (캐시)
