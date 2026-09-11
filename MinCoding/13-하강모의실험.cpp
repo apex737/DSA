@@ -1,8 +1,8 @@
+// #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <vector>
 
 using namespace std;
-
 
 struct MyBlock
 {
@@ -75,7 +75,7 @@ void simulate(int arr[][505])
 		int st, en;
 		st = en = 0;
 		MyBlock cur{ 0, 0, 1, 1.0f };
-		MyBlock nxt;
+		MyBlock nxt{ 0, 0, 1, 1.0f };;
 		bool done = false;
 		// 전역포인터 en이 범위를 이탈할 때까지 반복
 		while (en < N)
@@ -121,8 +121,22 @@ void simulate(int arr[][505])
 				cur.power *= 1.9f;
 
 			// 파워가 달리면 여기서 Stop
-			if (cur.power <= nxt.size)
+			if (cur.power <= nxt.size) {
+				/*  ------ AI ------ */
+				// 그냥 break만 거는게 아니라, 위치를 업데이트 한 다음에.. 
+
+				 // 기존 cur 제거
+				for (int i = cur.st; i <= cur.en; i++)
+					arr[i][j] = 0;
+
+				// nxt 바로 위까지 낙하
+				int newSt = nxt.st - cur.size;
+
+				for (int i = 0; i < cur.size; i++)
+					arr[newSt + i][j] = 1;
+				/*  ------ AI ------  */
 				break;
+			}
 
 			//  4. 다음 블럭에 현재 블럭 붙이기
 			// - 이전 블럭 구조체를 현재 블럭 구조체로 가져오기
@@ -186,16 +200,3 @@ void attachBlock(int j, int arr[][505], MyBlock cur, MyBlock& nxt, bool done)
 	// 여기서 nxt.size의 의미가 진짜로 attach된 다음 블럭 크기로 바뀜
 	nxt.size = nxt.en - nxt.st + 1;
 }
-
-/*	Answer
-	#1 6 4
-	#2 3 7
-	#3 11 5
-	#4 17 12
-	#5 30 26
-	#6 55 49
-	#7 115 141
-	#8 239 238
-	#9 283 286
-	#10 272 296
-*/
