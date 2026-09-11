@@ -3,6 +3,7 @@
 
 using namespace std;
 
+
 struct MyBlock
 {
 	int st, en;
@@ -185,3 +186,16 @@ void attachBlock(int j, int arr[][505], MyBlock cur, MyBlock& nxt, bool done)
 	// 여기서 nxt.size의 의미가 진짜로 attach된 다음 블럭 크기로 바뀜
 	nxt.size = nxt.en - nxt.st + 1;
 }
+
+/*	Answer
+	#1 6 4
+	#2 3 7
+	#3 11 5
+	#4 17 12
+	#5 30 26
+	#6 55 49
+	#7 115 141
+	#8 239 238
+	#9 283 286
+	#10 272 296
+*/
