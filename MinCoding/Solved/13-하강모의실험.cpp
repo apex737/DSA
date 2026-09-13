@@ -120,21 +120,9 @@ void simulate(int arr[][505])
 			for (int i = 0; i < fallDist; i++)
 				cur.power *= 1.9f;
 
-			// 파워가 달리면 여기서 Stop
+			// 파워가 달리면 여기서 Attach & Break
 			if (cur.power <= nxt.size) {
-				/*  ------ AI ------ */
-				// 그냥 break만 거는게 아니라, 위치를 업데이트 한 다음에.. 
-
-				 // 기존 cur 제거
-				for (int i = cur.st; i <= cur.en; i++)
-					arr[i][j] = 0;
-
-				// nxt 바로 위까지 낙하
-				int newSt = nxt.st - cur.size;
-
-				for (int i = 0; i < cur.size; i++)
-					arr[newSt + i][j] = 1;
-				/*  ------ AI ------  */
+				attachBlock(j, arr, cur, nxt, false);	
 				break;
 			}
 
@@ -142,7 +130,6 @@ void simulate(int arr[][505])
 			// - 이전 블럭 구조체를 현재 블럭 구조체로 가져오기
 			attachBlock(j, arr, cur, nxt, done);
 			cur = nxt;
-			// st를 블럭 다음 위치로 이동
 		}
 
 	NEXT_J:;
@@ -157,8 +144,6 @@ void attachBlock(int j, int arr[][505], MyBlock cur, MyBlock& nxt, bool done)
 		 [    ][   ]
 */
 {
-	
-
 	// 1. 기존 블럭 없애기
 	for (int i = 0; i < cur.size; i++) {
 		arr[i + cur.st][j] = 0;
@@ -166,16 +151,13 @@ void attachBlock(int j, int arr[][505], MyBlock cur, MyBlock& nxt, bool done)
 
 	int offset;
 	if (done)
-	/*	마무리 => 일부러 비어있는 구조체 (1Byte) 전달
-		cur을 끝부분에 붙이고 마무리한다.
+	/*	cur을 끝부분에 붙이고 마무리한다.
 		이미 cur.st, cur.en을 알고있다.
 		[   현재 블럭   ] [ 남은 공간 ] 
 	*/
 	{
 		int spaceLeft = N - 1 - nxt.en;
 		for (int i = 0; i < cur.size; i++) {
-
-			// 범위이탈: arr[i + nxt.st - cur.size][j] = 1;
 			offset = nxt.st + spaceLeft;
 			arr[i + offset][j] = 1;
 		}
