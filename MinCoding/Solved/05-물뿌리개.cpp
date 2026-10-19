@@ -1,7 +1,5 @@
-#include <bits/stdc++.h>
-using namespace std;
-int N;
-#include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
 using namespace std;
 
 int main()
@@ -43,11 +41,9 @@ int main()
     {
       int oneAug = one + 2 * conv;  // 1 -> 3
       int twoDec = two - conv;      // 2 -> 1
-      /* 고정 시퀀스 1 2 1 2 1 2 ....
+      /* Day는 고정 시퀀스 1 2 1 2 1 2 이므로..
       oneAug > twoDec  이면 2*oneAug - 1
-      twoDec >= oneAug 이면 2*twoDec
-      
-      */
+      twoDec >= oneAug 이면 2*twoDec  */
       int day = oneAug > twoDec ? 2*oneAug - 1 : 2 * twoDec;
       ans = min(ans, day);
     }

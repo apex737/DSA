@@ -1,144 +1,140 @@
 #include <iostream>
-#include <cmath>
+#include <vector>
 #include <queue>
+#include <algorithm>
 #include <cstring>
 
 using namespace std;
 
+struct Character {
+	int r, c;
+	int lv = 2;
+	int exp = 0;
+
+};
+
+int dr[] = { 1,0,-1,0 };
+int dc[] = { 0, 1,0,-1 };
+
+int board[21][21];
+
 int N;
-int board[22][22];
-int visited[22][22];
-struct Character
-{
-  int r, c, lv, exp, t;
+struct Pos {
+	int r, c, d;
 };
 
-struct Pos
+vector<Pos> reachables;
+bool isReachable(const Character& ch)
 {
-  int r, c, d;
-};
+	// BFS 도달가능한, 나보다 레벨 작은 몬스터 리스트업
+	reachables.clear();
 
-int dr[] = {1, 0, -1, 0};
-int dc[] = {0, 1, 0, -1};
+	Pos st{ ch.r,ch.c,0 };
+	int visited[21][21];
+	memset(visited, 0, sizeof(visited));
+	queue<Pos> q;
+	visited[st.r][st.c] = 1;
+	q.push(st);
+	while (!q.empty())
+	{
+		Pos cur = q.front(); q.pop();
 
-vector<Pos> reachable;
-int res;
-// 1. Reachable 후보 리스트 (BFS Flood Fill)
-// 나보다 레벨 작은 몬스터 만나면 벡터에 저장
-bool isReachable(const Character &ch)
-{
-  queue<Pos> q;
-  q.push({ch.r, ch.c, 0}); // 캐릭터 위치 기준으로 거리 재계산
-  visited[ch.r][ch.c] = 1;
-  while (!q.empty())
-  {
-    auto cur = q.front();
-    q.pop();
-    for (int i = 0; i < 4; i++)
-    {
-      int nr = cur.r + dr[i];
-      int nc = cur.c + dc[i];
-      // B ound
-      if (nr < 0 || nc < 0 || nr >= N || nc >= N)
-        continue;
-      // F ence: 나보다 레벨 높으면
-      if (board[nr][nc] > ch.lv)
-        continue;
-      // S een
-      if (visited[nr][nc])
-        continue;
-      visited[nr][nc] = 1;
-      // 도달가능한, 나보다 레벨이 낮은 몬스터 위치를 벡터에 저장
-      if (board[nr][nc] > 0 && board[nr][nc] < ch.lv)
-      {
-        reachable.push_back({nr, nc, cur.d + 1});
-      }
-      q.push({nr, nc, cur.d + 1});
-    }
-  }
-  if (reachable.size() == 0)
-    return false;
-  return true;
+		// 까봤더니, 나보다 레벨 작은 몬스터라면
+		int b = board[cur.r][cur.c];
+		if (b > 0 && b < ch.lv) {
+			reachables.push_back({ cur.r,cur.c,cur.d });
+		}
+
+		for (int i = 0; i < 4; i++)
+		{
+			int nr = cur.r + dr[i];
+			int nc = cur.c + dc[i];
+			if (nr < 0 || nc < 0 || nr >= N || nc >= N) continue;
+			if (visited[nr][nc]) continue;
+			// Fence: 나보다 레벨 높은 몬스터 만나면 
+			if (board[nr][nc] > ch.lv) continue;
+			visited[nr][nc] = 1;
+			q.push({ nr,nc,cur.d + 1 });
+
+		}
+	}
+
+	// 사이즈가 0이면 아무것도 못찾았으니 종료
+	return reachables.size();
 }
 
-// 2. 최종선택 (거리, 동점처리)
-/**
- * @param mPos은 도달가능한 몬스터의 위치를 들고 있는 벡터
- * @return 최종 선택된 몬스터 위치
- */
-Pos select(const vector<Pos> &mPos, const Character &ch)
-{
-  // 사냥할 수 있는 몬스터가 1 마리일 경우는 해당 몬스터를 사냥합니다.
-  if (mPos.size() == 1)
-  {
-    return mPos[0];
-  }
-  // 사냥할 수 있는 몬스터가 1 마리보다 많다면, 거리가 가까운 몬스터를 사냥합니다.
-  Pos ret;
-  int mn = 21e8;
-  for (auto p : mPos)
-  {
-    // 1. 거리비교
-    if (mn > p.d)
-    {
-      mn = p.d;
-      ret = p;
-    }
-    // 2. 동점처리
-    else if (mn == p.d)
-    {
-      // 거리가 가까운 몬스터가 여러마리이면, 가장 위에 있는 몬스터를 ,
-      // 그러한 몬스터도 여러마리면, 가장 왼쪽의 몬스터를 사냥합니다.
-      if (ret.r > p.r || (ret.r == p.r && ret.c > p.c))
-        ret = p;
-    }
-  }
+Pos selectPos()
 
-  return ret;
-}
-// 3. 캐릭터 상태 갱신
-void update(Character &ch, const Pos &nxt)
+/*
+사냥할 수 있는 몬스터가 1 마리일 경우는 해당 몬스터를 사냥합니다.
+사냥할 수 있는 몬스터가 1 마리보다 많다면, 거리가 가까운 몬스터를 사냥
+거리가 가까운 몬스터가 여러마리이면, 가장 위에 있는 몬스터를 ,
+그러한 몬스터도 여러마리면, 가장 왼쪽의 몬스터를 사냥
+=> 벡터에 몬스터의 위치를 저장
+ 더 이상 사냥할 수 있는 몬스터가 없으면 매크로를 중지
+
+*/
 {
-  ch.t += nxt.d;
-  ch.r = nxt.r;
-  ch.c = nxt.c;
-  board[ch.r][ch.c] = 0;
-  if (++ch.exp == ch.lv)
-  {
-    ch.lv++;
-    ch.exp = 0;
-  }
+	Pos nxtPos;
+	if (reachables.size() == 1) {
+		return reachables[0];
+	}
+
+	// sort를 잘쓰면 우선순위가 자동 처리됨
+	sort(reachables.begin(), reachables.end(), [](Pos a, Pos b) {
+		// 1. d가 다르면 작은걸 우선한다.
+		if (a.d != b.d) return a.d < b.d;
+		// 2. r이 다르면 작은걸 우선한다.
+		else if (a.r != b.r) return a.r < b.r;
+		// 3. c가 다르면 작은걸 우선한다.
+		else
+			return a.c < b.c;
+	});
+
+	return reachables[0];
 }
 
-// 동점시 스캔순서는 배열스캔방향
-int main()
+
+void updateState(const Pos& nxtPos, Character& ch, int& t)
 {
-  cin >> N;
-  int sr, sc;
-  sr = sc = 0;
-  for (int i = 0; i < N; i++)
-    for (int j = 0; j < N; j++)
-    {
-      cin >> board[i][j];
-      if (board[i][j] == 9)
-      {
-        sr = i;
-        sc = j;
-      }
-    }
+	// 다음위치로 이동하면서 캐릭터의 상태를 갱신하고 맵도 갱신한다.
+	ch.r = nxtPos.r;
+	ch.c = nxtPos.c;
+	t += nxtPos.d;
+	board[ch.r][ch.c] = 0;
+	// exp가 레벨과 같아지면 레벨 업
+	if (++ch.exp == ch.lv) {
+		ch.lv++;
+		ch.exp = 0;
+	}
+}
 
-  Character ch = {sr, sc, 2, 0, 0};
-  res = 0;
-  board[sr][sc] = 0;  // <-- 이거 놓쳐서 디버깅 2시간 함
+int main(void)
+{
+	/*
+	1. BFS로 도달가능한, 나보다 레벨 작은 몬스터 리스트업 + 선택
+	2. 해당 위치로 이동
+	3. 캐릭터 상태 갱신
+	*/
+	cin >> N;
+	Character ch;
+	for (int i = 0; i < N; i++)
+		for (int j = 0; j < N; j++)
+		{
+			cin >> board[i][j];
+			if (board[i][j] == 9) {
+				ch.r = i; ch.c = j;
+				board[i][j] = 0;
+			}
+		}
 
-  while (isReachable(ch))
-  {
-    Pos nxt = select(reachable, ch);
-    update(ch, nxt);
-    reachable.clear();
-    memset(visited, 0, sizeof(visited));
-  }
+	int elaps_time = 0;
+	while (isReachable(ch))
+	{
+		updateState(selectPos(), ch, elaps_time);
+	}
 
-  cout << ch.t << "\n";
-  return 0;
+	cout << elaps_time;
+
+	return 0;
 }

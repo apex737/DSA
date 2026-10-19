@@ -1,70 +1,74 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <queue>
+
 using namespace std;
 
-int dr[4] = {-1, 1, 0, 0};
-int dc[4] = { 0, 0,-1, 1};
+int D[31][31];
+int board[31][31];
+int N;
 
-struct Edge {
-    int r, c, cost;
+struct Node {
+	int r, c, cost;
+	// 우선순위가 other에 밀릴 조건은 cost가 더 큰 경우이다.
+	bool operator<(const Node& other) const {
+		return cost > other.cost;
+	}
 };
 
-struct cmp {
-    bool operator()(Edge a, Edge b) {
-        return a.cost > b.cost;   // 비용이 작을수록 먼저 나오는 최소 힙
-    }
-};
+int dc[] = { 1, 0,-1,0 };
+int dr[] = { 0,1,0,-1 };
 
-int main() {
-    int T;
-    cin >> T;
-    for (int tc = 1; tc <= T; tc++) {
-        int N;
-        cin >> N;
-        vector<vector<int>> h(N, vector<int>(N));
+int main()
+{
+	int T;
+	cin >> T;
+	for (int t = 1; t <= T; t++)
+	{
+		cin >> N;
+		for (int i = 0; i < N; i++)
+			for (int j = 0; j < N; j++) {
+				cin >> board[i][j];
+				D[i][j] = 21e8;
+			}
 
-        // ① 높이 지도 입력
-        for (int i = 0; i < N; i++)
-            for (int j = 0; j < N; j++)
-                cin >> h[i][j];
+		priority_queue<Node> pq;
+		/*	Dijk 정규형 (Init - Lazy Deletion - Relaxation)
 
-        // ② dist를 INF로 초기화, dist[0][0] = 0
-        vector<vector<int>> dist(N, vector<int>(N, INT_MAX));
-        dist[0][0] = 0;
+			1. INF 초기화
+			2. lazy-deletion; 꺼낸 뒤, D와 비교해서 비싸면 드랍 
+			3. relaxation; 더 싼 경로를 찾으면 cost 갱신
+		*/
+		pq.push({ 0,0,0 });
+		D[0][0] = 0;
+		while (!pq.empty())
+		{
+			auto cur = pq.top(); pq.pop();
+			// lazy del
+			if (cur.cost > D[cur.r][cur.c]) continue;
+			for (int i = 0; i < 4; i++)
+			{
+				int nr = cur.r + dr[i];
+				int nc = cur.c + dc[i];
+				if (nr < 0 || nc < 0 || nr >= N || nc >= N) continue;
+				int nxtCost;
+				int curH = board[cur.r][cur.c];
+				int nxtH = board[nr][nc];
+				if (curH < nxtH)
+					nxtCost = 2 * (nxtH - curH);
+				else if (curH == nxtH)
+					nxtCost = 1;
+				else
+					nxtCost = 0;
+				nxtCost += cur.cost;
+				if(nxtCost < D[nr][nc]) 
+				{
+					D[nr][nc] = nxtCost;
+					pq.push({ nr,nc,nxtCost });
+				}
+			}
+		}
 
-        // ③ 최소 힙 준비하고 시작점 삽입
-        priority_queue<Edge, vector<Edge>, cmp> pq;
-        pq.push({0, 0, 0});
-
-        // ④ 다익스트라 루프
-        while (!pq.empty()) {
-            // ④-a: 가장 싼 상태 꺼내기
-            Edge now = pq.top();
-            pq.pop();
-
-            // ④-b: 낡은 정보면 skip
-            if (now.cost > dist[now.r][now.c]) continue;
-
-            // ④-c: 네 방향에 대해
-            for (int k = 0; k < 4; k++) {
-                int nr = now.r + dr[k];
-                int nc = now.c + dc[k];
-
-                // - 범위 검사
-                if (nr < 0 || nr >= N || nc < 0 || nc >= N) continue;
-
-                // - 높이 차이로 이동 비용 계산 (내리막 0 / 평지 1 / 오르막 2×차이)
-                int cost = /* TODO: h[now.r][now.c]와 h[nr][nc]를 비교해서 계산 */ 0;
-
-                // - 완화(relax)
-                int nextCost = now.cost + cost;
-                if (nextCost < dist[nr][nc]) {
-                    dist[nr][nc] = nextCost;
-                    pq.push({nr, nc, nextCost});
-                }
-            }
-        }
-
-        cout << "#" << tc << " " << dist[N - 1][N - 1] << "\n";
-    }
-    return 0;
+		cout << "#" << t << " " << D[N-1][N-1] << "\n";
+	}
+	return 0;
 }
